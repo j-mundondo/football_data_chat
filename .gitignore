@@ -29,6 +29,7 @@ htmlcov/
 # Data files
 *.csv
 **.csv
+
 *.xlsx
 **.xlsx
 *.xls
