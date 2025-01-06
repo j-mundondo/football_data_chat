@@ -7,7 +7,7 @@ thinking_phrases = [
 "Pondering the possibilities...",
 "Contemplating the response...",
 "Crafting the reply...",
-"Synthesizing the answer..."
+"Synthesising the answer..."
 ]
 
 # In your sidebar or wherever you select the model

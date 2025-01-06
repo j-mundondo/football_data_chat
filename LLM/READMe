@@ -1,0 +1,8 @@
+# Activate LLM :
+- navigate into the api folder `cd ./api`
+- In terminal activate and launch the app `uvicorn main:app --reload`
+
+# Run The Streamlit File :
+- In a seperate terminal navigate to the correct folder and run `streamlit_app.py`
+- e.g. streamlit run `pexi_app/streamlit_app.py`
+-streamlit run LLM/movement_variables_llm/streamlit_app.py
