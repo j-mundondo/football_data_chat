@@ -22,7 +22,7 @@ llm = ChatGroq(
     max_retries=2,
 )
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+retriever = vectorstore.as_retriever(search_kwargs={"k": 10}) #<--------------------------------- DETERMINES HOW MANY FOLLOW --------
 
 output_parser = StrOutputParser()
 contextualize_q_system_prompt = (
