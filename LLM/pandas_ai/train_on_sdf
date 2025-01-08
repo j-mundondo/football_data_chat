@@ -1,0 +1,116 @@
+# BRING IN LIBRARIES
+# %%
+import pandas as pd
+import os
+from dotenv import load_dotenv
+from pandasai import SmartDataframe
+from pandasai.llm import BambooLLM
+from langchain_groq.chat_models import ChatGroq
+load_dotenv()
+import pandasai as pai
+pai.clear_cache()
+
+# Field pre-reqs
+field_descriptions = {
+    'High Intensity Activity Type': 'Classification of the movement (Acceleration/Deceleration/Sprint)',
+    'Start Time': 'Timestamp when activity began (HH:MM:SS)',
+    'End Time': 'Timestamp when activity ended (HH:MM:SS)', 
+    'Time Since Last': 'Duration since previous activity of that same type (MM:SS.S)',
+    'Duration': 'Length of activity (MM:SS.S)',
+    'Distance': 'Meters traveled during activity',
+    'Magnitude': 'Peak intensity measure of the activity',
+    'Avg Metabolic Power': 'Average energy expenditure during activity (W/kg)',
+    'Dynamic Stress Load': 'Cumulative stress metric from activity intensity',
+    'Duration_seconds': 'The number of seconds the High Intensity Activity Type in the row lasted as a float',
+    'Long_sprint': 'A binary flag indicating if a movement is a long sprint. 1 indicates it is a long sprint, 0 means it is not.',
+    'Preceding High Intensity Activity Type': 'The type of high intensity activity type that happened before this row.'
+}
+
+# Read data
+df = pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\individual_efforts\david_only_metrics.csv")
+
+# Set up LLM
+llm_api_key = os.environ['GROQ_API_KEY']
+langchain_api_key = os.environ['LANGCHAIN_API_KEY']
+llm = ChatGroq(
+    model="llama3-8b-8192",
+    temperature=0,
+    max_tokens=None,
+    timeout=None,
+    max_retries=2,
+    seed=5
+)
+
+# Create SmartDataframe with config
+smart_df = SmartDataframe(
+    df,
+    config={
+        "llm": llm,
+        "field_descriptions": field_descriptions,
+        "verbose": True,
+        "custom_whitelisted_dependencies": ["dateutil"]
+    }
+)
+
+# Add training instructions
+smart_df.train(
+    "When calculating time between activities, always convert timestamps to datetime, sort by start time, " +
+    "calculate differences between consecutive activities, convert to seconds, and filter out negative or zero differences"
+)
+
+# Add Q/A training examples
+time_between_query = "What is the average time between accelerations?"
+time_between_code = """
+import pandas as pd
+
+df = dfs[0]
+action_df = df[df['High Intensity Activity Type'] == 'Acceleration'].copy()
+action_df['Start Time'] = pd.to_datetime(action_df['Start Time'])
+action_df = action_df.sort_values('Start Time')
+time_diffs = (action_df['Start Time'] - action_df['Start Time'].shift(1)).dropna()
+time_diffs_seconds = time_diffs.dt.total_seconds()
+time_diffs_seconds = time_diffs_seconds[time_diffs_seconds > 0]
+average_time = round(time_diffs_seconds.mean(), 2)
+result = {'type': 'number', 'value': float(average_time)}
+"""
+
+multiple_actions_query = "How many times were there multiple decelerations within 1 minute?"
+multiple_actions_code = """
+import pandas as pd
+
+df = dfs[0]
+df['Start Time'] = pd.to_datetime(df['Start Time'])
+action_df = df[df['High Intensity Activity Type'] == 'Deceleration'].copy()
+action_df = action_df.sort_values('Start Time')
+
+windows = []
+current_window = []
+for idx, row in action_df.iterrows():
+    current_time = row['Start Time']
+    if not current_window:
+        current_window = [(current_time, row)]
+        continue
+    time_diff = (current_time - current_window[0][0]).total_seconds()
+    if time_diff <= 60:
+        current_window.append((current_time, row))
+    else:
+        if len(current_window) > 1:
+            windows.append(current_window)
+        current_window = [(current_time, row)]
+
+if len(current_window) > 1:
+    windows.append(current_window)
+
+result = {'type': 'number', 'value': float(len(windows))}
+"""
+
+# Train with Q/A examples
+smart_df.train(queries=[time_between_query, multiple_actions_query], 
+               codes=[time_between_code, multiple_actions_code])
+
+# Test queries
+print(smart_df.chat("What is the time between sprints?"))
+print(smart_df.chat("How many times were there multiple decelerations within 1 minute?"))
+print(smart_df.chat("How many rows are there in the data?"))
+
+# %%
