@@ -1,13 +1,13 @@
 from pathlib import Path
 import streamlit as st
-from pandasai.responses.streamlit_response import StreamlitResponse
+#from pandasai.responses.streamlit_response import StreamlitResponse
 import pandas as pd
 import os
 from dotenv import load_dotenv
-from pandasai import SmartDataframe
-from pandasai.llm import BambooLLM
+#from pandasai import SmartDataframe
+#from pandasai.llm import BambooLLM
 from langchain_groq.chat_models import ChatGroq
-from pandasai.connectors import PandasConnector
+#from pandasai.connectors import PandasConnector
 from pandasai.skills import skill
 from pandasai import Agent
 import tempfile
@@ -37,6 +37,31 @@ field_descriptions = {
 def calculate_time_between_actions(df, action):
     """
     Calculates the average time between specified actions using datetime calculations.
+    This skill should be used for any questions about:
+    - Average time between specific activities (sprints, accelerations, decelerations)
+    - Time intervals between movements
+    - Temporal spacing of activities
+    - Mean duration between consecutive actions
+    
+    Args:
+        df (pandas.DataFrame): DataFrame containing player actions with columns:
+            - 'High Intensity Activity Type': The type of movement
+            - 'Start Time': Timestamp of when the activity began
+        action (str): The type of action to analyze. Must be one of:
+            - 'Sprint'
+            - 'Acceleration' 
+            - 'Deceleration'
+    
+    Returns:
+        dict: Dictionary containing:
+            - type: 'number'
+            - value: Average time in seconds between consecutive actions
+    
+    Example queries this skill should handle:
+    - "What's the average time between sprints?"
+    - "How long do players typically wait between accelerations?"
+    - "What's the mean time interval between consecutive decelerations?"
+    - "Calculate the average duration between sprint efforts"
     """
     try:
         action_df = df[df['High Intensity Activity Type'] == action].copy()
@@ -59,7 +84,31 @@ def calculate_time_between_actions(df, action):
 @skill
 def find_multiple_actions_in_timespan(df, action, time_in_seconds):
     """
-    Identifies occurrences of multiple actions within a specified timespan.
+    Identifies occurrences of multiple actions occurring within a specified timespan.
+    This skill should be used for any questions about:
+    - Frequency of repeated actions within a time window
+    - Clusters of activities
+    - Multiple efforts in quick succession
+    - Action density in time periods
+    
+    Args:
+        df (pandas.DataFrame): DataFrame containing player actions
+        action (str): The type of action to analyze. Must be one of:
+            - 'Sprint'
+            - 'Acceleration'
+            - 'Deceleration'
+        time_in_seconds (int): Time window to analyze in seconds
+    
+    Returns:
+        dict: Dictionary containing:
+            - type: 'number'
+            - value: Count of time windows containing multiple actions
+    
+    Example queries this skill should handle:
+    - "How many times were there multiple sprints within 30 seconds?"
+    - "Count instances of repeated accelerations in 1 minute windows"
+    - "Find clusters of decelerations happening within 45 seconds"
+    - "Number of times a player did multiple sprints in quick succession"
     """
     df['Start Time'] = pd.to_datetime(df['Start Time'])
     action_df = df[df['High Intensity Activity Type'] == action].copy()
@@ -86,6 +135,10 @@ def find_multiple_actions_in_timespan(df, action, time_in_seconds):
 def plot_time_between_actions(df, action: str):
     """
     Displays histogram and box plot of time intervals between specific actions.
+    
+    Args:
+        df (pandas.DataFrame): DataFrame containing player actions
+        action (str): The type of action to analyze ('Sprint', 'Acceleration', 'Deceleration')
     """
     import matplotlib.pyplot as plt
     import seaborn as sns
