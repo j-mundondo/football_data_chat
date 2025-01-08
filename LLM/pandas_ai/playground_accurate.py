@@ -1,4 +1,4 @@
-# %%
+
 # BRING IN LIBRARIES
 import pandas as pd
 import os
@@ -15,7 +15,7 @@ load_dotenv()
 import pandasai as pai
 pai.clear_cache()
 
-# %%
+
 # Field descriptions
 field_descriptions = {
     'High Intensity Activity Type': 'Classification of the movement (Acceleration/Deceleration/Sprint)',
@@ -32,11 +32,11 @@ field_descriptions = {
     'Preceding High Intensity Activity Type': 'The type of high intensity activity type that happened before this row.'
 }
 
-# %%
+
 # Load data
 df = pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\individual_efforts\david_only_metrics.csv")
 
-# %%
+
 # SET UP LLM
 llm_api_key = os.environ['GROQ_API_KEY']
 langchain_api_key = os.environ['LANGCHAIN_API_KEY']
@@ -45,11 +45,11 @@ llm = ChatGroq(
     temperature=0,
     max_tokens=None,
     timeout=None,
-    max_retries=2,
-    seed=5
+    max_retries=2
+#    seed=5
 )
 
-# %%
+
 # Define skills
 @skill
 def calculate_time_between_actions(df, action):
@@ -177,24 +177,93 @@ def find_multiple_actions_in_timespan(df, action, time_in_seconds):
         'value': float(total_windows)
     }
 
-# %%
-# AGENT SET UP
+
+# Add new plotting skill
+#@skill 
+
+@skill 
+def plot_time_between_actions(df, action: str):
+    """
+    Displays histogram and box plot of time intervals between specific actions.
+    
+    Args:
+        df (pandas.DataFrame): DataFrame containing player actions
+        action (str): The type of action to analyze ('Sprint', 'Acceleration', 'Deceleration')
+    """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    
+    # Filter and prepare data
+    action_df = df[df['High Intensity Activity Type'] == action].copy()
+    action_df['Start Time'] = pd.to_datetime(action_df['Start Time'])
+    action_df = action_df.sort_values('Start Time')
+    
+    # Calculate time differences
+    time_diffs = (action_df['Start Time'] - action_df['Start Time'].shift(1)).dt.total_seconds()
+    time_diffs = time_diffs[time_diffs > 0]
+    
+    # Create figure with two subplots
+    plt.figure(figsize=(10, 8))
+    
+    # Histogram
+    plt.subplot(2, 1, 1)
+    sns.histplot(time_diffs, bins=30)
+    plt.title(f'Distribution of Time Between {action}s')
+    plt.xlabel('Seconds between actions')
+    plt.ylabel('Frequency')
+    
+    # Box plot
+    plt.subplot(2, 1, 2)
+    sns.boxplot(x=time_diffs)
+    plt.title(f'Box Plot of Time Between {action}s')
+    plt.xlabel('Seconds between actions')
+    
+    # Add statistics
+    stats_text = (f'Mean: {time_diffs.mean():.1f}s\n'
+                 f'Median: {time_diffs.median():.1f}s\n'
+                 f'Min: {time_diffs.min():.1f}s\n'
+                 f'Max: {time_diffs.max():.1f}s')
+    plt.figtext(0.95, 0.5, stats_text, fontsize=10, ha='right')
+    
+    plt.tight_layout()
+
+ 
+# Update agent setup to include new skill
 vector_store = ChromaDB()
 agent = Agent(df, 
              vectorstore=vector_store,
-             memory_size=0, 
+             memory_size=2, 
              config={
                 "field_descriptions": field_descriptions,
                 'llm': llm,
                 "verbose": True,
-                "custom_whitelisted_dependencies": ["dateutil"]
+                "custom_whitelisted_dependencies": ["dateutil", "matplotlib", "seaborn"]
              })
 
-# Add skills to agent
-agent.add_skills(calculate_time_between_actions, find_multiple_actions_in_timespan)
 
-# %%
+
+# AGENT SET UP
+# vector_store = ChromaDB()
+# agent = Agent(df, 
+#              vectorstore=vector_store,
+#              memory_size=2, 
+#              config={
+#                 "field_descriptions": field_descriptions,
+#                 'llm': llm,
+#                 "verbose": True,
+#                 "custom_whitelisted_dependencies": ["dateutil"]
+#              })
+
+# Add skills to agent
+#agent.add_skills(calculate_time_between_actions, find_multiple_actions_in_timespan)
+# Add all skills to agent
+agent.add_skills(calculate_time_between_actions, 
+                find_multiple_actions_in_timespan,
+                plot_time_between_actions)
+
 # Training data setup with multiple examples
+
+# Training data setup - all examples in single lists
 training_queries = [
     "What is the average time between sprints?",
     "How much time passes between accelerations?",
@@ -205,7 +274,9 @@ training_queries = [
     "Find clusters of decelerations happening within 45 seconds",
     "How often did the player do multiple sprints in quick succession?",
     "What's the average rest period between sprints?",
-    "How frequently do accelerations occur?"
+    "How frequently do accelerations occur?",
+    "Plot the distribution of times between sprints",
+    "Show me a visualization of acceleration intervals"
 ]
 
 training_responses = [
@@ -218,30 +289,41 @@ training_responses = [
     "result = find_multiple_actions_in_timespan(dfs[0], 'Deceleration', 45)",
     "result = find_multiple_actions_in_timespan(dfs[0], 'Sprint', 30)",
     "result = calculate_time_between_actions(dfs[0], 'Sprint')",
-    "result = calculate_time_between_actions(dfs[0], 'Acceleration')"
+    "result = calculate_time_between_actions(dfs[0], 'Acceleration')",
+    "result = plot_time_between_actions(dfs[0], 'Sprint')",
+    "result = plot_time_between_actions(dfs[0], 'Acceleration')"
 ]
 
 # Train the agent
 agent.train(queries=training_queries, codes=training_responses)
+print("done")
 
-# %% 
+ 
 # Test the agent
 response = agent.chat("What is the average time between sprints?")
 print(response)
 
-# %%
+
 print(agent.last_code_generated)
 
-# %%
+
 response2 = agent.chat("How many times were there multiple decelerations within 1 minute?")
 print(response2)
 
-# %%
+
 print(agent.last_code_generated)
 
-# %%
+
 response = agent.chat("What is the average time between Accelerations?")
 print(response)
 
-# %%
+
+print(agent.last_code_generated)
+
+ 
+# Test the new plotting functionality
+response = agent.chat("Plot the distribution of time between sprints")
+print(response)
+
+
 print(agent.last_code_generated)
