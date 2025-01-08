@@ -1,56 +1,8 @@
-
-# BRING IN LIBRARIES
-import pandas as pd
-import os
-from dotenv import load_dotenv
-from pandasai import SmartDataframe
-from pandasai.llm import BambooLLM
-from langchain_groq.chat_models import ChatGroq
-from pandasai.connectors import PandasConnector
 from pandasai.skills import skill
-from pandasai import Agent
-from pandasai.ee.vectorstores import ChromaDB
-from dotenv import load_dotenv
-load_dotenv()
-import pandasai as pai
-pai.clear_cache()
-
-
-# Field descriptions
-field_descriptions = {
-    'High Intensity Activity Type': 'Classification of the movement (Acceleration/Deceleration/Sprint)',
-    'Start Time': 'Timestamp when activity began (HH:MM:SS)',
-    'End Time': 'Timestamp when activity ended (HH:MM:SS)', 
-    'Time Since Last': 'Duration since previous activity of that same type (MM:SS.S)',
-    'Duration': 'Length of activity (MM:SS.S)',
-    'Distance': 'Meters traveled during activity',
-    'Magnitude': 'Peak intensity measure of the activity',
-    'Avg Metabolic Power': 'Average energy expenditure during activity (W/kg)',
-    'Dynamic Stress Load': 'Cumulative stress metric from activity intensity',
-    'Duration_seconds': 'The number of seconds the High Intensity Activity Type in the row lasted as a float',
-    'Long_sprint': 'A binary flag indicating if a movement is a long sprint. 1 indicates it is a long sprint, 0 means it is not.',
-    'Preceding High Intensity Activity Type': 'The type of high intensity activity type that happened before this row.'
-}
-
-
-# Load data
-df = pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\individual_efforts\david_only_metrics.csv")
-
-
-# SET UP LLM
-llm_api_key = os.environ['GROQ_API_KEY']
-langchain_api_key = os.environ['LANGCHAIN_API_KEY']
-llm = ChatGroq(
-    model="llama3-8b-8192",
-    temperature=0,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2
-#    seed=5
-)
-
+import pandas as pd
 
 # Define skills
+
 @skill
 def calculate_time_between_actions(df, action):
     """
@@ -227,43 +179,6 @@ def plot_time_between_actions(df, action: str):
     
     plt.tight_layout()
 
- 
-# Update agent setup to include new skill
-vector_store = ChromaDB()
-agent = Agent(df, 
-             vectorstore=vector_store,
-             memory_size=2, 
-             config={
-                "field_descriptions": field_descriptions,
-                'llm': llm,
-                "verbose": True,
-                "custom_whitelisted_dependencies": ["dateutil", "matplotlib", "seaborn"]
-             })
-
-
-
-# AGENT SET UP
-# vector_store = ChromaDB()
-# agent = Agent(df, 
-#              vectorstore=vector_store,
-#              memory_size=2, 
-#              config={
-#                 "field_descriptions": field_descriptions,
-#                 'llm': llm,
-#                 "verbose": True,
-#                 "custom_whitelisted_dependencies": ["dateutil"]
-#              })
-
-# Add skills to agent
-#agent.add_skills(calculate_time_between_actions, find_multiple_actions_in_timespan)
-# Add all skills to agent
-agent.add_skills(calculate_time_between_actions, 
-                find_multiple_actions_in_timespan,
-                plot_time_between_actions)
-
-# Training data setup with multiple examples
-
-# Training data setup - all examples in single lists
 training_queries = [
     "What is the average time between sprints?",
     "How much time passes between accelerations?",
@@ -293,37 +208,3 @@ training_responses = [
     "result = plot_time_between_actions(dfs[0], 'Sprint')",
     "result = plot_time_between_actions(dfs[0], 'Acceleration')"
 ]
-
-# Train the agent
-agent.train(queries=training_queries, codes=training_responses)
-print("done")
-
- 
-# Test the agent
-response = agent.chat("What is the average time between sprints?")
-print(response)
-
-
-print(agent.last_code_generated)
-
-
-response2 = agent.chat("How many times were there multiple decelerations within 1 minute?")
-print(response2)
-
-
-print(agent.last_code_generated)
-
-
-response = agent.chat("What is the average time between Accelerations?")
-print(response)
-
-
-print(agent.last_code_generated)
-
- 
-# Test the new plotting functionality
-response = agent.chat("Plot the distribution of time between sprints")
-print(response)
-
-
-print(agent.last_code_generated)
