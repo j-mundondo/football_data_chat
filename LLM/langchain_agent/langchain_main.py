@@ -1,6 +1,7 @@
 # %%
 # LIBRARIES AND SET UP
 from langchain_core.prompts import ChatPromptTemplate
+
 from langchain_groq import ChatGroq
 from langchain_core.documents import Document
 from dotenv import load_dotenv
@@ -15,19 +16,23 @@ import openai
 import pandas as pd
 from langchain.agents import Tool
 from pathlib import Path
+from llm import get_llm
+from tools import create_tools
+from preprocess_df import full_preprocess
+from create_agent import custom_agent
 dotenv_path = Path(r'C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\LLM\langchain_agent\.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 # %%
-llm = ChatGroq(
-    api_key=os.environ['GROQ_API_KEY'],  
-    model="llama3-8b-8192",
-    temperature=0,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2
-)
+df = pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\individual_efforts\david_only_metrics.csv")
+llm = get_llm()
+#tools=create_tools(df)
+
 # %%
+df = full_preprocess(df)
+agent = custom_agent(df)
 
-
+# %%
+x=agent.invoke("What are the most common 2 action sequences of high-intensity activities in 5 seconds timespans?")
+display(x)
 # %%
