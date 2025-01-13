@@ -192,7 +192,7 @@ from langchain_community.chat_message_histories import StreamlitChatMessageHisto
 import os
 # Setup logo path
 logo_path = os.path.join('assets', 'STATSports-logo.png')
-LOGO_URL = "https://postimg.cc/5jH1gRLq"
+LOGO_URL = "https://www.irishfa.com/media/31411/statsports-pod.jpg"
 # Set up Streamlit page config - MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(
     page_title="S.S. Movement Analysis Beta",
