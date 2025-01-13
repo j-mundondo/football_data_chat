@@ -191,12 +191,12 @@ from langchain.memory import ConversationBufferMemory
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 import os
 # Setup logo path
-logo_path = os.path.join('assets', 'STATSports-logo.svg')
+logo_path = os.path.join('assets', 'STATSports-logo.png')
 LOGO_URL = "https://ibb.co/Mc0YFmP"
 # Set up Streamlit page config - MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(
     page_title="S.S. Movement Analysis Beta",
-    page_icon=LOGO_URL#logo_path  # Using emoji instead of file path
+    page_icon=logo_path#logo_path  # Using emoji instead of file path
 )
 
 # Hide default Streamlit formatting
