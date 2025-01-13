@@ -190,11 +190,13 @@ from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 from langchain.memory import ConversationBufferMemory
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 import os
+# Setup logo path
+logo_path = os.path.join('assets', 'STATSports-logo.svg')
 
 # Set up Streamlit page config - MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(
     page_title="S.S. Movement Analysis Beta",
-    page_icon="⚽"  # Using emoji instead of file path
+    page_icon=logo_path  # Using emoji instead of file path
 )
 
 # Hide default Streamlit formatting
@@ -206,8 +208,6 @@ hide_default_format = """
 """
 st.markdown(hide_default_format, unsafe_allow_html=True)
 
-# Setup logo path
-logo_path = os.path.join('assets', 'STATSports-logo.svg')
 
 # Initialize session state
 if 'messages' not in st.session_state:
