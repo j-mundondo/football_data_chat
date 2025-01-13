@@ -191,8 +191,8 @@ from langchain.memory import ConversationBufferMemory
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 import os
 # Setup logo path
-logo_path = os.path.join('assets', 'STATSports-logo.svg')
-LOGO_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjUtpKjek3YsCidSo5GIds8Wvk8zK5ID6vWg&s"
+logo_path = os.path.join('assets', 'STATSports-logo.png')
+LOGO_URL = logo_path#"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjUtpKjek3YsCidSo5GIds8Wvk8zK5ID6vWg&s"
 # Set up Streamlit page config - MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(
     page_title="S.S. Movement Analysis Beta",
