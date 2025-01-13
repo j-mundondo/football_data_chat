@@ -7,10 +7,18 @@ import pandas as pd
 from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 from langchain.memory import ConversationBufferMemory
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
+import os
 # Load environment variables
-dotenv_path = Path(r'C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\LLM\langchain_agent\.env')
-load_dotenv(dotenv_path=dotenv_path)
-
+#dotenv_path = Path(r'C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\LLM\langchain_agent\.env')
+#load_dotenv(dotenv_path=dotenv_path)
+logo_path = os.path.join('assets', 'STATSports-logo.svg')
+try:
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=100)
+    else:
+        st.title("STATSports")  # Fallback if logo isn't available
+except Exception as e:
+    st.title("STATSports")  # Fallback if there's any error
 # Set up Streamlit page config
 logo_url = r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\STATSports-logo.svg"
 st.set_page_config(
