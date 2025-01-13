@@ -225,14 +225,14 @@ if 'agent' not in st.session_state:
     st.session_state.agent = None
 
 # Set up the main interface
-try:
-    if os.path.exists(logo_path):
-        st.image(LOGO_URL, width=100)
-    else:
-        st.title("STATSports")
-except Exception as e:
-    st.title("STATSports")
-
+# try:
+#     if os.path.exists(logo_path):
+#         st.image(LOGO_URL, width=100)
+#     else:
+#         st.title("STATSports")
+# except Exception as e:
+#     st.title("STATSports")
+st.image(LOGO_URL, width=100)
 st.title("Football Movement Analysis (BETA) ⚽🏃‍♂️")
 
 # Sidebar Debug Section
