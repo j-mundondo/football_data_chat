@@ -19,19 +19,22 @@ from llm import get_llm
 from tools import create_tools
 from preprocess_df import full_preprocess
 from create_agent import custom_agent
-dotenv_path = Path(r'C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\LLM\langchain_agent\.env')
-load_dotenv(dotenv_path=dotenv_path)
+#dotenv_path = Path(r'C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\LLM\langchain_agent\.env')
 
-# %%
-df = pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\individual_efforts\david_only_metrics.csv")
-llm = get_llm()
-#tools=create_tools(df)
+if __name__ == "__main__":
+    dotenv_path = Path(r'C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\LLM\langchain_agent\.env')
+    load_dotenv(dotenv_path=dotenv_path)
 
-# %%
-df = full_preprocess(df)
-agent = custom_agent(df)
+    # %%
+    df = pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\individual_efforts\david_only_metrics.csv")
+    #llm = get_llm()
+    #tools=create_tools(df)
 
-# %%
-x=agent.invoke("How often do players have to complete multiple decelerations in a short period??")
-display(x)
-# %%
+    # %%
+    df = full_preprocess(df)
+    agent = custom_agent(df)
+
+    # %%
+    x=agent.invoke("How often do players have to go through a series of high intensity activities and then complete a sprint?")
+    display(x)
+    # %%

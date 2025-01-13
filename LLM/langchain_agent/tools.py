@@ -40,8 +40,7 @@ def create_tools(df):
             Dictionary containing sequences, their counts, and percentages.
 
         Example Questions Where this function would be useful : 
-            * What are the most common 2 action sequences of high-intensity activities in 5 seconds timespans?
-            
+            * What are the most common 2 action sequences of high-intensity activities in 5 seconds timespans?      
         """
         def parse_time_to_seconds(time_str):
             if pd.isna(time_str):
@@ -388,11 +387,113 @@ def create_tools(df):
                 'time_distribution': {}
             }
 
+    @tool
+    def sequence_ending_with_action(
+        final_action: str,
+        sequence_length: int = 3,
+        max_time_between: float = 10.0,
+        final_must_be_long: bool = False
+    ) -> Dict:
+            """
+            Analyze sequences of high-intensity activities that end with a specific action.
+            
+            Args:
+                final_action: The action that should end the sequence (e.g., 'Sprint')
+                sequence_length: Total number of actions in the sequence, including final action (default: 3)
+                max_time_between: Maximum time (in seconds) allowed between actions in sequence
+                final_must_be_long: Whether the final action must be flagged as 'long' (default: False)
+
+            Returns:
+                Dictionary containing:
+                - sequence_details: Description of sequence criteria
+                - common_patterns: Most common sequences found, ending with specified action
+                - total_occurrences: Number of qualifying sequences found
+                - average_time_total: Average time to complete full sequence
+                - sequence_distribution: Frequency of different patterns found
+
+            Example Questions Where this function would be useful:
+                * How often do players have to go through a series of high intensity activities and then complete a long sprint?
+                * What typically precedes a long sprint?
+                * What patterns of activity commonly lead to decelerations?
+                * How many times do players do multiple high-intensity actions before a sprint?
+            """
+            def parse_time_to_seconds(time_str):
+                if pd.isna(time_str):
+                    return 0
+                minutes, seconds = time_str.split(':')
+                return float(minutes) * 60 + float(seconds)
+            
+            sequences = []
+            sequence_times = []
+            current_sequence = []
+            current_times = []
+            
+            # Convert times to seconds
+            time_seconds = df['Time Since Last Any Action'].apply(parse_time_to_seconds)
+            
+            for i in range(len(df)):
+                current_action = df['High Intensity Activity Type'].iloc[i]
+                time_since_last = time_seconds.iloc[i]
+                
+                # Check if this is the final action we're looking for
+                is_final_action = (current_action == final_action and 
+                                (not final_must_be_long or df['Long_sprint'].iloc[i] == 1))
+                
+                if time_since_last > max_time_between:
+                    current_sequence = []
+                    current_times = []
+                
+                current_sequence.append(current_action)
+                if time_since_last > 0:  # Don't add time for first action
+                    current_times.append(time_since_last)
+                
+                # If we have the right length and ends with final action
+                if (len(current_sequence) >= sequence_length and 
+                    is_final_action and 
+                    current_sequence[-1] == final_action):
+                    sequences.append(tuple(current_sequence[-sequence_length:]))
+                    sequence_times.append(sum(current_times[-sequence_length+1:]))  # +1 because first action has no time
+            
+            total_sequences = len(sequences)
+            
+            if total_sequences > 0:
+                # Get sequence frequencies
+                sequence_counts = pd.Series(sequences).value_counts()
+                
+                return {
+                    'sequence_details': (f"Sequences of {sequence_length} actions ending in {final_action}" +
+                                    (" (long)" if final_must_be_long else "")),
+                    'common_patterns': [
+                        {
+                            'sequence': ' → '.join(seq),
+                            'count': count,
+                            'percentage': float((count/total_sequences * 100))
+                        }
+                        for seq, count in sequence_counts.head(5).items()
+                    ],
+                    'total_occurrences': total_sequences,
+                    'average_time_total': f"{(sum(sequence_times)/len(sequence_times)):.2f}s",
+                    'sequence_distribution': {
+                        'unique_patterns': len(sequence_counts),
+                        'most_common_count': int(sequence_counts.iloc[0]),
+                        'least_common_count': int(sequence_counts.iloc[-1])
+                    }
+                }
+            else:
+                return {
+                    'sequence_details': (f"No sequences of {sequence_length} actions ending in {final_action}" +
+                                    (" (long)" if final_must_be_long else "")),
+                    'common_patterns': [],
+                    'total_occurrences': 0,
+                    'average_time_total': None,
+                    'sequence_distribution': {}
+                }
     def get_all_tools():
         return  [
     most_common_event_sequences,
     consecutive_action_frequency,
     analyze_actions_after_distance,
     action_frequency_with_distance,
-    multiple_actions_in_period]
+    multiple_actions_in_period,
+    sequence_ending_with_action]
     return get_all_tools()
