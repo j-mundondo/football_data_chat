@@ -227,13 +227,13 @@ if 'agent' not in st.session_state:
 # Set up the main interface
 try:
     if os.path.exists(logo_path):
-        st.image(logo_path, width=100)
+        st.image(LOGO_URL, width=100)
     else:
         st.title("STATSports")
 except Exception as e:
     st.title("STATSports")
 
-st.title("Football Movement Analysis ⚽🏃‍♂️")
+st.title("Football Movement Analysis (BETA) ⚽🏃‍♂️")
 
 # Sidebar Debug Section
 with st.sidebar:
@@ -307,7 +307,7 @@ if prompt := st.chat_input("What would you like to analyse?"):
 
         # Get agent response
         try:
-            avatar = "⚽" if not os.path.exists(logo_path) else logo_path
+            avatar = LOGO_URL if not os.path.exists(logo_path) else logo_path
             with st.chat_message("assistant", avatar=avatar):
                 st_callback = StreamlitCallbackHandler(st.container())
                 try:
