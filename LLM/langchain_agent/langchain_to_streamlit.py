@@ -195,7 +195,7 @@ logo_path = os.path.join('assets', 'STATSports-logo.png')
 LOGO_URL = "https://www.irishfa.com/media/31411/statsports-pod.jpg"
 # Set up Streamlit page config - MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(
-    page_title="S.S. Movement Analysis Beta",
+    page_title="STATSports Movement Analysis Beta",
     page_icon=LOGO_URL#logo_path  # Using emoji instead of file path
 )
 
@@ -307,7 +307,7 @@ if prompt := st.chat_input("What would you like to analyse?"):
 
         # Get agent response
         try:
-            avatar = LOGO_URL if not os.path.exists(logo_path) else logo_path
+            avatar = LOGO_URL if not os.path.exists(logo_path) else LOGO_URL
             with st.chat_message("assistant", avatar=avatar):
                 st_callback = StreamlitCallbackHandler(st.container())
                 try:
