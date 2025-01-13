@@ -286,10 +286,113 @@ def create_tools(df):
                 'average_distance': float(filtered_actions['Distance'].mean()) if filtered_count > 0 else 0
             }
 
+    @tool
+    def multiple_actions_in_period(
+    action_type: str,
+    num_actions: int = 2,
+    period_type: str = 'short',
+    custom_time: float = None,
+    use_long_actions: bool = False
+    ) -> Dict:
+        """
+        Analyze occurrences of multiple similar actions within specified time periods.
+        
+        Args:
+            action_type: Type of action to analyze (e.g., 'Sprint', 'Acceleration')
+            num_actions: Number of actions to look for within the period (default: 2)
+            period_type: 'short' (<15s) or 'long' (>15s) (default: 'short')
+            custom_time: Optional custom time period in seconds (overrides period_type)
+            use_long_actions: Whether to only consider actions flagged as 'long' in the data
+
+        Returns:
+            Dictionary containing:
+            - action_details: Description of what was analyzed
+            - total_occurrences: Number of times this pattern occurred
+            - average_time_between: Average time between consecutive actions
+            - time_distribution: Distribution of time gaps between actions
+
+        Example Questions Where this function would be useful:
+            * How often do players have to complete multiple sprints in a short period?
+            * Are there instances of 3 accelerations within 10 seconds?
+            * How often do long sprints occur close together?
+            * What's the typical gap between repeated high-intensity actions?
+        """
+        def parse_time_to_seconds(time_str):
+            if pd.isna(time_str):
+                return 0
+            minutes, seconds = time_str.split(':')
+            return float(minutes) * 60 + float(seconds)
+
+        # Filter for specified action type and long flag if requested
+        action_df = df[df['High Intensity Activity Type'] == action_type].copy()
+        if use_long_actions:
+            action_df = action_df[action_df['Long_sprint'] == 1]
+        
+        sequences = []
+        current_sequence = []
+        times_between = []
+        
+        for i in range(len(action_df)):
+            time_since_last = parse_time_to_seconds(action_df.iloc[i]['Time Since Last'])
+            
+            # Determine if this action should be included based on time criteria
+            if custom_time is not None:
+                include_action = time_since_last < custom_time if period_type == 'short' else time_since_last > custom_time
+            else:
+                include_action = time_since_last < 15 if period_type == 'short' else time_since_last > 15
+            
+            if not include_action:
+                if len(current_sequence) >= num_actions:
+                    sequences.append(tuple(current_sequence))
+                current_sequence = [i]
+            else:
+                if current_sequence:  # If we're building a sequence
+                    times_between.append(time_since_last)
+                current_sequence.append(i)
+            
+            # Check if we've completed a sequence
+            if len(current_sequence) >= num_actions:
+                sequences.append(tuple(current_sequence))
+                
+        # Calculate statistics
+        total_sequences = len(sequences)
+        
+        if total_sequences > 0:
+            avg_time = sum(times_between) / len(times_between) if times_between else 0
+            
+            # Calculate time distribution
+            time_dist = pd.Series(times_between).describe()
+            
+            threshold_desc = f"< {custom_time if custom_time is not None else 15}s" if period_type == 'short' else f"> {custom_time if custom_time is not None else 15}s"
+            
+            return {
+                'action_details': (f"{num_actions}x {action_type}" + 
+                                    (" (long only)" if use_long_actions else "") + 
+                                    f" with gaps {threshold_desc}"),
+                'total_occurrences': total_sequences,
+                'average_time_between': f"{int(avg_time//60):02d}:{(avg_time%60):05.2f}",
+                'time_distribution': {
+                    'min': float(time_dist['min']),
+                    'max': float(time_dist['max']),
+                    '25%': float(time_dist['25%']),
+                    '75%': float(time_dist['75%']),
+                    'median': float(time_dist['50%'])
+                }
+            }
+        else:
+            threshold_desc = f"< {custom_time if custom_time is not None else 15}s" if period_type == 'short' else f"> {custom_time if custom_time is not None else 15}s"
+            return {
+                'action_details': f"No sequences of {num_actions}x {action_type} found with gaps {threshold_desc}",
+                'total_occurrences': 0,
+                'average_time_between': None,
+                'time_distribution': {}
+            }
+
     def get_all_tools():
         return  [
     most_common_event_sequences,
     consecutive_action_frequency,
     analyze_actions_after_distance,
-    action_frequency_with_distance]
+    action_frequency_with_distance,
+    multiple_actions_in_period]
     return get_all_tools()

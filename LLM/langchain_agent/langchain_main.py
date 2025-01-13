@@ -1,7 +1,6 @@
 # %%
 # LIBRARIES AND SET UP
 from langchain_core.prompts import ChatPromptTemplate
-
 from langchain_groq import ChatGroq
 from langchain_core.documents import Document
 from dotenv import load_dotenv
@@ -33,6 +32,6 @@ df = full_preprocess(df)
 agent = custom_agent(df)
 
 # %%
-x=agent.invoke("What are the most common 2 action sequences of high-intensity activities in 5 seconds timespans?")
+x=agent.invoke("How often do players have to complete multiple decelerations in a short period??")
 display(x)
 # %%
