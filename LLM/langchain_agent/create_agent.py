@@ -126,7 +126,7 @@ def custom_agent(dataframe, memory=None):
     result = get_value_frequencies("High Intensity Activity Type")
     print(result)
     ```
-    {Tool shows actual output with numbers}
+    PUT ANSWER HERE
     Based on the results, Sprint is most common with 45 occurrences (30%).
 
     Field Descriptions:
