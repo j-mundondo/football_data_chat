@@ -172,7 +172,7 @@ def custom_agent(dataframe, memory=None):
     Example of correct response:
     ```python
     result = df['column'].value_counts()
-    print(f"Result: {result}")
+    print(f"Result: [actual results]")
     ```
     Result: [actual numbers]
     Based on the actual data, X has Y occurrences."""
