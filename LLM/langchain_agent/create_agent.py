@@ -38,6 +38,7 @@ def custom_agent(dataframe, memory=None):
     STEP 1: State the approach
     STEP 2: Show the single code block
     STEP 3: Explain what the code will tell us
+    STEP 4: The Actual answer
 
     Example Response Format:
     "To find the highest value in the Dynamic Stress Load:
