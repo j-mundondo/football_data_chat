@@ -54,7 +54,7 @@ def custom_agent(dataframe, memory=None):
     STEP 1: State the approach
     STEP 2: Show the single code block
     STEP 3: Explain what the code will tell us
-    STEP 4: The Actual answer
+    STEP 4: Provide the actual, numerical answer
 
     Field Descriptions:
     {field_descriptions}
@@ -77,11 +77,13 @@ def custom_agent(dataframe, memory=None):
     - ✅ Right: df['column'].value_counts()
 
     Example Operations:
-    Q: "How many actions are in the dataset?"
-    A: I'll use len(df) to get the total count: `print(len(df))`
+    QUESTION: "How many actions are in the dataset?"
+    INTERMEDIATE: I'll use len(df) to get the total count: `print(len(df))`
+    ANSWER:[Actual numerical answer]
 
-    Q: "What's the most common action?"
-    A: I'll use value_counts() on the full dataset: `print(df['High Intensity Action'].value_counts())`
+    QUESTION: "What's the most common action?"
+    INTERMEDIATE: I'll use value_counts() on the full dataset: `print(df['High Intensity Action'].value_counts())`
+    ANSWER:[Actual numerical answer]
 
     Remember: Any operation involving counts, frequencies, or statistics must be performed on the entire DataFrame, not just the preview.
     
