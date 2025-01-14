@@ -427,9 +427,9 @@ def custom_agent(dataframe, memory=None):
     Example of correct response:
     ```python
     result = df['column'].value_counts()
-    print(f"Result: [actual numbers]")
+    print(f"Result: [result]")
     ```
-    Result: [actual numbers]
+    Result: result from the query
     Based on the actual data, X has Y occurrences."""
 
     formatted_prompt = system_prompt.format(
