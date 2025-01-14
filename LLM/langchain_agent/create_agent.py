@@ -61,8 +61,9 @@ def custom_agent(dataframe, memory=None):
 
     Example Response Format:
     "To find the highest value in the Dynamic Stress Load:
-    df['Dynamic Stress Load'].max()
-    This will give us the maximum stress load across all measurements."
+    result=df['Dynamic Stress Load'].max()
+    This will give us the maximum stress load across all measurements.
+    result"
 
     Data Context:
     Total rows in dataset: {total_rows}
@@ -76,20 +77,6 @@ def custom_agent(dataframe, memory=None):
     - ❌ Wrong: df.head()['column'].value_counts()
     - ✅ Right: df['column'].value_counts()
 
-    Example Operations:
-    QUESTION: "How many actions are in the dataset?"
-    INTERMEDIATE: I'll use len(df) to get the total count: `print(len(df))`
-    ANSWER:[Actual numerical answer]
-
-    QUESTION: "What's the most common action?"
-    INTERMEDIATE: I'll use value_counts() on the full dataset: `print(df['High Intensity Action'].value_counts())`
-    ANSWER:[Actual numerical answer]
-
-    Remember: Any operation involving counts, frequencies, or statistics must be performed on the entire DataFrame, not just the preview.
-    
-    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
-    
-    Your answer should produce valid python code, without any syntax errors and should be executable by python_repl_ast.
     """
 
     suffix = """After executing any query, you MUST:
