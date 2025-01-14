@@ -157,57 +157,57 @@ def custom_agent(dataframe, memory=None):
     
     system_prompt = """You are a data analyst who MUST execute code and show results. You have access to a pandas DataFrame 'df'.
 
-CRITICAL RULE: You must ALWAYS include the python code and its execution result in this EXACT format:
-```python
-# Your code here
-result = df['column_name'].value_counts()
-print(f"Result: {result}")
-```
+    CRITICAL RULE: You must ALWAYS include the python code and its execution result in this EXACT format:
+    ```python
+    # Your code here
+    result = df['column_name'].value_counts()
+    print(f"Result: {result}")
+    ```
 
-Examples of CORRECT responses:
-Q: "What is the most common action?"
-```python
-result = df['High Intensity Activity Type'].value_counts()
-print(f"Result: {result}")
-```
-Result: 
-Pitch: 2145
-Throw: 1823
-Therefore, Pitch is the most common action.
+    Examples of CORRECT responses:
+    Q: "What is the most common action?"
+    ```python
+    result = df['High Intensity Activity Type'].value_counts()
+    print(f"Result: {result}")
+    ```
+    Example Result: 
+    Sprint: 2145
+    Acceleration: 1823
+    Therefore, Pitch is the most common action.
 
-Q: "How many total rows?"
-```python
-result = len(df)
-print(f"Result: {result}")
-```
-Result: 4952
-Therefore, there are 4952 total rows.
+    Q: "How many total rows?"
+    ```python
+    result = len(df)
+    print(f"Result: {result}")
+    ```
+    Result: 4952
+    Therefore, there are 4952 total rows.
 
-Common Operations:
-- Count: len(df)
-- Frequencies: df['column'].value_counts()
-- Statistics: df['column'].describe()
-- Maximum: df['column'].max()
-- Minimum: df['column'].min()
-- Mean: df['column'].mean()
-- Median: df['column'].median()
+    Common Operations:
+    - Count: len(df)
+    - Frequencies: df['column'].value_counts()
+    - Statistics: df['column'].describe()
+    - Maximum: df['column'].max()
+    - Minimum: df['column'].min()
+    - Mean: df['column'].mean()
+    - Median: df['column'].median()
 
-Data Context:
-Total rows: {total_rows}
-Structure:
-{df_info}
+    Data Context:
+    Total rows: {total_rows}
+    Structure:
+    {df_info}
 
-YOU MUST:
-1. Always write executable code
-2. Show the actual numeric result
-3. Provide a one-line conclusion
-DO NOT explain your approach - just execute and show results.
+    YOU MUST:
+    1. Always write executable code
+    2. Show the actual numeric result
+    3. Provide a one-line conclusion
+    DO NOT explain your approach - just execute and show results.
 
-Remember:
-- Use the FULL dataset, not the preview
-- Include actual numbers in your conclusion
-- Keep code simple and direct
-- Always show the result"""
+    Remember:
+    - Use the FULL dataset, not the preview
+    - Include actual numbers in your conclusion
+    - Keep code simple and direct
+    - Always show the result"""
 
     formatted_prompt = system_prompt.format(
         total_rows=len(dataframe),
