@@ -105,17 +105,17 @@ def custom_agent(dataframe, memory=None):
         - find_most_common_actions(): For frequency analysis (e.g., "What are the top 3 most frequent activities?")
 
     2. For Complex Analysis:
-        - most_common_event_sequences(): For identifying common patterns (e.g., "What actions typically follow sprints?")
-        - consecutive_action_frequency(): For analyzing action sequences (e.g., "How often do sprints follow accelerations?")
-        - analyze_actions_after_distance(): For distance-based patterns (e.g., "What follows sprints over 20m?")
-        - action_frequency_with_distance(): For analyzing movement magnitudes (e.g., "How often are sprints longer than 30m?")
-        - multiple_actions_in_period(): For repeated actions (e.g., "How often do players sprint twice in 10 seconds?")
-        - sequence_ending_with_action(): For analyzing action chains (e.g., "What leads to decelerations?")
+        - most_common_event_sequences(): For identifying common patterns
+        - consecutive_action_frequency(): For analyzing action sequences
+        - analyze_actions_after_distance(): For distance-based patterns
+        - action_frequency_with_distance(): For analyzing movement magnitudes
+        - multiple_actions_in_period(): For repeated actions
+        - sequence_ending_with_action(): For analyzing action chains
 
     ALWAYS answer questions using this format:
     1. "I'll use [specific tool name] to analyze this"
     2. Execute the tool with appropriate parameters
-    3. Show the complete numeric output
+    3. Show the complete output
     4. Provide conclusion with exact numbers
 
     Example Correct Answer:
@@ -126,8 +126,8 @@ def custom_agent(dataframe, memory=None):
     result = count_specific_actions(action_type="Sprint")
     print(result)
     ```
-    Tool output: {'action_type': 'Sprint', 'count': 45, 'percentage': 30.2, 'total_actions': 149}
-    Based on the data, there are exactly 45 sprints, representing 30.2% of all actions.
+    Tool output: Found 45 instances of Sprint out of 149 total actions (30.2%)
+    Based on the data, there are exactly 45 sprints, making up 30.2% of all actions.
 
     Field Descriptions:
     {field_descriptions}
@@ -165,16 +165,13 @@ def custom_agent(dataframe, memory=None):
     result = find_most_common_actions(top_n=3)
     print(result)
     ```
-    Tool output: {
-        'top_actions': {
-            'Sprint': {'count': 45, 'percentage': 30.2},
-            'Acceleration': {'count': 32, 'percentage': 21.5},
-            'Deceleration': {'count': 28, 'percentage': 18.8}
-        },
-        'total_actions': 149,
-        'unique_actions': 3
-    }
-    Based on this data, Sprints are most common with exactly 45 occurrences (30.2% of all actions), followed by Accelerations (32 occurrences, 21.5%) and Decelerations (28 occurrences, 18.8%)."""
+    Tool output: 
+    Top 3 actions out of 149 total:
+    Sprint: 45 occurrences (30.2%)
+    Acceleration: 32 occurrences (21.5%)
+    Deceleration: 28 occurrences (18.8%)
+
+    Based on this data, Sprints are most common with exactly 45 occurrences (30.2% of all actions), followed by Accelerations with 32 occurrences (21.5%)."""
     formatted_prompt = system_prompt.format(
         total_rows=len(dataframe),
         df_info=str(dataframe.info()),
