@@ -30,7 +30,7 @@ def get_llm():
             temperature=0,
             max_tokens=None, 
             timeout=None,
-            max_retries=2
+            max_retries=4
         )
         return llm
     except Exception as e:

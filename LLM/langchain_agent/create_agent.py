@@ -85,7 +85,10 @@ def custom_agent(dataframe, memory=None):
 
     Remember: Any operation involving counts, frequencies, or statistics must be performed on the entire DataFrame, not just the preview.
     
-    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again."""
+    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+    
+    Your answer should produce valid python code, without any syntax errors and should be executable by python_repl_ast.
+    """
 
     suffix = """After executing any query, you MUST:
     1. Show the actual numeric output in your response
