@@ -42,7 +42,7 @@ def custom_agent(dataframe, memory=None):
     - Then provide the code in a single clean block
     - Format your response like this:
       "To find [metric], I will check [column] using:
-      df['column'].max()"
+      df['column'].max()" then execute the code using python_repl"
 
     5. For basic operations use:
     - Total count: len(df)
