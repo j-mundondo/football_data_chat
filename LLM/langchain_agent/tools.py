@@ -70,7 +70,7 @@ def create_tools(df):
         return {
             'sequences': list(sequence_counts.index),
             'counts': list(sequence_counts.values),
-            'percentages': list((sequence_counts.values / len(sequences) * 100).round(2))
+            'percentages': list((sequence_counts.values / len(sequences) * 100))
         }
     #most_common_event_sequences(df, n_actions=4)
 
@@ -198,7 +198,7 @@ def create_tools(df):
         # Calculate frequencies
         if following_actions:
             frequencies = pd.Series(following_actions).value_counts()
-            percentages = (frequencies / len(following_actions) * 100).round(2)
+            percentages = (frequencies / len(following_actions) * 100)
             
             return {
                 'following_actions': list(frequencies.index),
@@ -512,7 +512,7 @@ def create_tools(df):
             return {
                 'action_type': action_type,
                 'count': int(count),
-                'percentage': float((count/total * 100).round(2)),
+                'percentage': float((count/total * 100)),
                 'total_actions': total
             }
         else:
@@ -585,7 +585,7 @@ def create_tools(df):
             'top_actions': {
                 action: {
                     'count': int(count),
-                    'percentage': float((count/len(df) * 100).round(2))
+                    'percentage': float((count/len(df) * 100))
                 }
                 for action, count in top_actions.items()
             },
@@ -629,7 +629,7 @@ def create_tools(df):
     #             'count': int(count),
     #             'column': column_name,
     #             'total_rows': len(df),
-    #             'percentage_filled': float((count/len(df) * 100).round(2))
+    #             'percentage_filled': float((count/len(df) * 100))
     #         }
     #     return {
     #         'count': len(df),
