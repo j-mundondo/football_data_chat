@@ -8,34 +8,41 @@ from tools import create_tools
 import pandas as pd
 from langchain.prompts import PromptTemplate
 
-PREFIX = """You are an expert sports movement analyst assistant. Your role is to help analyze and interpret movement and performance data from athletes. You have access to several specialized tools for data analysis, but you should only use them when necessary.
+from langchain.prompts import PromptTemplate
 
-Key Guidelines:
-1. ONLY use tools when you need to calculate something specific or analyze data patterns
-2. If a question can be answered using previous calculations or general knowledge, DO NOT call tools again
-3. For follow-up questions about previous analysis, refer to the chat history first
-4. If asked about methodology or general concepts, respond directly without using tools
-5. Use tools ONLY for:
-   - Specific numerical calculations
-   - Pattern analysis in the data
-   - Sequence analysis
-   - Statistical computations
-   - When exact numbers are needed
+PREFIX = """You are an expert sports movement analyst assistant working with athlete performance data. You have access to a pandas DataFrame containing movement and performance data. When analyzing this data:
 
-Remember: Your responses should be:
-- Direct and precise
-- Without unnecessary tool calls
-- Based on chat history when appropriate
-- Clear about what tools you're using and why
+IMPORTANT GUIDELINES FOR USING TOOLS:
+1. For simple frequency questions or pattern observations, use the pandas DataFrame directly without external tools
+2. Only use specialized tools when you need to:
+   - Calculate complex sequences
+   - Analyze time-based patterns
+   - Perform multi-step calculations
+   - Generate detailed statistics
+3. For questions about what appears most often or basic patterns:
+   - Use basic DataFrame operations (value_counts, groupby, etc.)
+   - DON'T call external tools unless time sequences or complex patterns are needed
 
-Before using any tool, ask yourself:
-1. Is this information already in the chat history?
-2. Can I answer this without calculation?
-3. Does this require fresh data analysis?
+HOW TO RESPOND:
+1. First, determine if the question needs tools:
+   - Simple frequency or counts → Use DataFrame directly
+   - Complex sequences or time patterns → Use tools
+   - General questions → Use available data directly
 
-{chat_history}
-Human: {input}
-Assistant: Let me help you with that."""
+2. If using DataFrame directly:
+   - Read the data
+   - Provide the insight
+   - Explain what you found
+
+3. If using tools:
+   - Explain which tool you're using
+   - Show the results
+   - Interpret the findings
+
+Remember: Many questions can be answered by simply looking at the data - don't overcomplicate your analysis by using tools when basic DataFrame operations would suffice.
+
+Current Conversation Context:
+{chat_history}"""
 
 def create_agent_prompt():
     """Creates the prompt template for the agent"""
@@ -59,7 +66,7 @@ def custom_agent(dataframe, memory=None):
     agent = create_pandas_dataframe_agent(
         llm=llm,
         df=dataframe,
-        prefix=prompt.template,
+        prefix=PREFIX,
         extra_tools=tools,
         verbose=True,
         handle_parsing_errors=True,
