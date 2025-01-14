@@ -181,6 +181,12 @@ def custom_agent(dataframe, memory=None):
         total_rows=len(dataframe),
         df_info=str(dataframe.info())
     )
+
+    formatted_suffix = suffix.format(
+        total_rows=len(dataframe),
+        df_info=str(dataframe.info())
+    )
+    
     
     # Create the agent with simplified configuration
     agent = create_pandas_dataframe_agent(
@@ -193,7 +199,7 @@ def custom_agent(dataframe, memory=None):
         agent_type="tool-calling",
         memory=memory,
         prefix=formatted_prompt,
-        suffix=suffix
+        suffix=formatted_suffix
     )
     
     return agent
