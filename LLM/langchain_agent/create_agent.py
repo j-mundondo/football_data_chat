@@ -106,6 +106,9 @@ Examples:
 Current Data Summary:
 {df_info}
 
+Please note that the above is only a representatitve set using df.head(). So for question that don't require tools e.g. how many
+rows in the data you can't only consider the 5 rows you see. you still have to do something to the effect of len(df).
+
 Remember: Keep it simple. Only use tools when absolutely necessary."""
 
     # Create the agent with simplified configuration
