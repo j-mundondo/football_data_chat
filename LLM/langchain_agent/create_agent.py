@@ -102,7 +102,7 @@ def custom_agent(dataframe, memory=None):
     Example format:
     ```python
     result = df['High Intensity Activity Type'].value_counts()
-    print(f"Result:")
+    print(f"Result: result")
     print(result)
     ```
     
@@ -127,8 +127,7 @@ def custom_agent(dataframe, memory=None):
         allow_dangerous_code=True,
         agent_type="tool-calling",
         memory=memory,
-        prefix=formatted_prompt,
-        suffix=formatted_suffix
+        prefix=formatted_prompt#,suffix=formatted_suffix
     )
     
     return agent
