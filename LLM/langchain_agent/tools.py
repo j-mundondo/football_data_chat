@@ -567,7 +567,7 @@ def create_tools(df):
         
         Args:
             top_n: Number of top actions to return (default: 3)
-            relevant_colum : The column the question is being asked about
+            relevant_colum : The column the question is being asked about e.g. for most common action, the relevant_colum is `High Intensity Activity Type`
             
         Returns:
             Dictionary with frequency analysis
