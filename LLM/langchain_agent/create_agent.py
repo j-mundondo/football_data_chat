@@ -54,11 +54,12 @@ def custom_agent(dataframe, memory=None):
     """
     llm = get_llm()
     tools = create_tools(dataframe)
+    prompt = create_agent_prompt()
     
     agent = create_pandas_dataframe_agent(
         llm=llm,
         df=dataframe,
-        prefix=str(prompt),
+        prefix=prompt.template,
         extra_tools=tools,
         verbose=True,
         handle_parsing_errors=True,
