@@ -192,59 +192,32 @@ def custom_agent(dataframe, memory=None):
     llm = get_llm()
     tools = create_tools(dataframe)
     
-    # Field descriptions
-    field_descriptions = {
-        'High Intensity Activity Type': 'Classification of the movement (Acceleration/Deceleration/Sprint)',
-        'Start Time': 'Timestamp when activity began (HH:MM:SS)',
-        'End Time': 'Timestamp when activity ended (HH:MM:SS)', 
-        'Time Since Last': 'Duration since previous activity of that same type (MM:SS.S)',
-        'Duration': 'Length of activity (MM:SS.S)',
-        'Distance': 'Meters traveled during activity',
-        'Magnitude': 'Peak intensity measure of the activity',
-        'Avg Metabolic Power': 'Average energy expenditure during activity (W/kg)',
-        'Dynamic Stress Load': 'Cumulative stress metric from activity intensity',
-        'Duration_seconds': 'The number of seconds the High Intensity Activity Type in the row lasted as a float',
-        'Long_sprint': 'A binary flag indicating if a movement is a long sprint. 1 indicates it is a long sprint, 0 means it is not.',
-        'Preceding High Intensity Activity Type': 'The type of high intensity activity type that happened before this row.'
-    }
+    system_prompt = """You are a sports movement analyst with access to specialized tools. 
     
-    system_prompt = """You are a sports movement analyst with access to specialized tools for data analysis. You MUST use these tools and execute them to get real results.
+CRITICAL - READ CAREFULLY:
+You have access to tools that MUST be executed to get real results.
+YOU ARE NOT ALLOWED TO MAKE UP OR PREDICT RESULTS.
+YOU MUST WAIT FOR THE ACTUAL TOOL EXECUTION OUTPUT.
 
 Available Tools:
 1. Basic Analysis:
-    - count_specific_actions(): Count occurrences of actions
-    - get_numeric_column_stats(): Get statistics for numeric data
-    - find_most_common_actions(): Analyze action frequencies
+    count_specific_actions()
+    get_numeric_column_stats()
+    find_most_common_actions()
 
 2. Advanced Analysis:
-    - consecutive_action_frequency(): Analyze action sequences
-    - most_common_event_sequences(): Find common patterns
-    - analyze_actions_after_distance(): Analyze distance-based patterns
-    - action_frequency_with_distance(): Study movement distances
-    - multiple_actions_in_period(): Study repeated actions
-    - sequence_ending_with_action(): Analyze ending patterns
+    consecutive_action_frequency()
+    most_common_event_sequences()
+    analyze_actions_after_distance()
+    action_frequency_with_distance()
+    multiple_actions_in_period()
+    sequence_ending_with_action()
 
-CRITICAL RULES:
-1. You MUST use Python's exec() or similar functions to ACTUALLY RUN the tools
-2. NEVER just write the code without executing it
-3. ALWAYS show the actual, executed results
-4. VERIFY that your results match reality
-
-Response Format:
-1. Name the tool you'll use
-2. Execute the tool and capture result
-3. Show the actual tool output
-4. Give conclusion with real numbers
-
-Example (CORRECT):
-Q: "How many sprints are there?"
-A: Let me count the sprints using count_specific_actions.
-```python
-result = count_specific_actions(action_type="Sprint")
-print(result)
-```
-[Tool shows actual executed output: "Found 45 instances of Sprint out of 149 total actions (30.2%)"]
-Based on the actual execution, there are 45 sprints.
+HOW TO USE TOOLS:
+1. Write the tool call
+2. WAIT for actual execution
+3. Use ONLY the real output returned by the tool
+4. DO NOT make up or predict what the output might be
 
 Field Descriptions:
 {field_descriptions}
@@ -254,36 +227,29 @@ Total rows in dataset: {total_rows}
 Preview of data structure:
 {df_info}
 
-REMEMBER:
-- You MUST execute every tool you use
-- You MUST show the actual execution output
-- You MUST verify your results"""
+EXECUTION RULES:
+1. DO NOT create or predict outputs
+2. ONLY use actual tool execution results
+3. WAIT for tool execution before providing outputs
+4. If you don't see real output, say "Waiting for tool execution"
+5. NEVER fabricate tool outputs"""
 
-    suffix = """CRITICAL EXECUTION REQUIREMENTS:
-1. EXECUTE the code - don't just write it
-2. Show REAL output from execution
-3. Double-check your results
-4. No placeholder text or example outputs
-5. Results should be from ACTUAL EXECUTION
+    suffix = """EXECUTION PROCESS:
+1. Write tool code
+2. WAIT for execution
+3. Use ONLY the actual output
+4. NO fabricated results
 
-UNACCEPTABLE (WRONG):
-❌ Just writing code without running it
-❌ Showing example/fake outputs
-❌ Using placeholder values
+IF YOU DON'T SEE ACTUAL EXECUTION OUTPUT:
+Say "Waiting for tool execution..."
 
-REQUIRED FORMAT:
-1. State tool choice
-2. Execute tool
-3. Show actual execution output
-4. Conclude with real numbers
-
-Example of CORRECT execution:
+CORRECT FORMAT:
 ```python
 result = consecutive_action_frequency(actions=["Sprint", "Deceleration"], max_time_between=2)
 print(result)
 ```
-[Actual executed output appears here]
-Conclusion using the real, executed numbers."""
+[WAIT FOR ACTUAL EXECUTION OUTPUT]
+Then use only the real output for your conclusion."""
 
     formatted_prompt = system_prompt.format(
         total_rows=len(dataframe),
