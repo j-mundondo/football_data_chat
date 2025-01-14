@@ -162,7 +162,7 @@ def custom_agent(dataframe, memory=None):
     Example:
     Q: "What's the most common action?"
     ```python
-    result = find_most_common_actions(top_n=3)
+    result = find_most_common_actions('High Intensity Activity Type',top_n=3)
     print(result)
     ```
     Tool output: 
@@ -191,7 +191,7 @@ def custom_agent(dataframe, memory=None):
         allow_dangerous_code=True,
         agent_type="tool-calling",
         memory=memory,
-        prefix=formatted_prompt#,suffix=formatted_suffix
+        prefix=formatted_prompt,suffix=formatted_suffix
     )
     
     return agent
