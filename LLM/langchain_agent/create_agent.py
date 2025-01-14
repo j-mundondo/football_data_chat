@@ -82,93 +82,26 @@ import pandas as pd
 from langchain.prompts import PromptTemplate
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 
-def format_tool_description(tool):
-    """Format tool description for better prompting"""
-    return f"""Tool: {tool.name}
-Description: {tool.description}
-When to use: {tool.when_to_use if hasattr(tool, 'when_to_use') else 'For specific calculations and analysis'}
-"""
-
-def create_decision_guide():
-    """Create a decision guide for the agent"""
-    return """
-DECISION PROCESS:
-1. Is this a simple frequency/count question?
-   → Use DataFrame operations directly (no tools)
-2. Does this involve time sequences or patterns?
-   → Use appropriate sequence analysis tool
-3. Is this a follow-up to previous results?
-   → Reference memory/chat history
-4. Is this about methodology or concepts?
-   → Provide direct explanation
-
-Remember: Tools are for complex analysis ONLY. Simple questions should be answered directly."""
-
-def enhance_tool_descriptions(tools):
-    """Add when_to_use field to tools"""
-    for tool in tools:
-        if not hasattr(tool, 'when_to_use'):
-            tool.when_to_use = """
-- Use for complex calculations
-- Use when time sequences matter
-- Use when patterns need analysis
-- DON'T use for simple counts or frequencies
-"""
-    return tools
-
 def custom_agent(dataframe, memory=None):
-    """Create a custom agent with enhanced tool guidance"""
+    """Create a minimal custom agent for Groq"""
     llm = get_llm()
     tools = create_tools(dataframe)
     
-    # Enhance tool descriptions
-    enhanced_tools = enhance_tool_descriptions(tools)
-    
-    # Create formatted tool descriptions
-    tool_descriptions = "\n".join([format_tool_description(tool) for tool in enhanced_tools])
-    
-    # Create system prompt with enhanced guidance
-    system_prompt = f"""You are a sports movement analyst assistant working with athlete performance data. You have access to a pandas DataFrame and specialized analysis tools.
+    system_prompt = """You analyze sports movement data. Use tools only for time-based or sequence analysis. For simple counts, use DataFrame directly.
 
-{create_decision_guide()}
+Example: 
+"Most common action?" → No tools
+"Action sequences?" → Use tools"""
 
-AVAILABLE TOOLS:
-{tool_descriptions}
-
-WHEN ANALYZING DATA:
-For Basic Questions (DO NOT USE TOOLS):
-- Simple counting or frequency questions
-- Basic statistics already in the DataFrame
-- General observations about the data
-- Questions about previous results
-- Explanations of concepts
-
-For Complex Analysis (USE TOOLS):
-- Time-based sequence analysis
-- Multi-event pattern detection
-- Complex statistical calculations
-- Cross-event relationships
-- Detailed performance metrics
-
-DataFrame Information:
-{str(dataframe.info())}
-
-Remember: Before using any tool, check if the question can be answered using simple DataFrame operations."""
-
-    # Create the agent with enhanced configuration
     agent = create_pandas_dataframe_agent(
         llm=llm,
         df=dataframe,
-        extra_tools=enhanced_tools,
+        extra_tools=tools,
         verbose=True,
         handle_parsing_errors=True,
         agent_type="openai-tools",
         memory=memory,
-        prefix=system_prompt,
-        kwargs={
-            "max_iterations": 2,
-            "early_stopping_method": "generate",
-        }
+        prefix=system_prompt
     )
     
     return agent
