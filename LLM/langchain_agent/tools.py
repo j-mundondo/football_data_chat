@@ -488,105 +488,223 @@ def create_tools(df):
                     'average_time_total': None,
                     'sequence_distribution': {}
                 }
-            
     @tool
-    def get_total_count(column_name: str = None) -> Dict:
+    def count_specific_actions(relevant_colum: str,action_type: str = None) -> Dict:
         """
-        Get the total count of rows, optionally filtered by a specific column.
+        Count occurrences of a specific action type or all actions.
         
         Args:
-            column_name: Optional column name to count non-null values for
+            action_type: Specific action to count (e.g., 'Sprint', 'Acceleration'). If None, counts all action types.
+            relevant_colum : The column the question is being asked about
             
         Returns:
-            Dictionary with total count and details
+            Dictionary with counts and percentages
             
         Example Questions:
-            * How many total actions are there?
-            * What is the total number of rows?
-            * How many non-null values are in [column]?
+            * How many sprints are there?
+            * What is the total number of accelerations?
+            * How many times did players sprint?
+            * Count all decelerations
         """
-        if column_name:
-            count = df[column_name].count()
+        if action_type:
+            count = len(df[df[relevant_colum] == action_type])
+            total = len(df)
             return {
+                'action_type': action_type,
                 'count': int(count),
-                'column': column_name,
-                'total_rows': len(df),
-                'percentage_filled': float((count/len(df) * 100).round(2))
+                'percentage': float((count/total * 100).round(2)),
+                'total_actions': total
             }
-        return {
-            'count': len(df),
-            'details': 'Total number of rows in dataset'
-        }
-
-    @tool
-    def get_column_stats(column_name: str) -> Dict:
-        """
-        Get basic statistics for a numeric column.
-        
-        Args:
-            column_name: Name of the column to analyze
-            
-        Returns:
-            Dictionary with basic statistics
-            
-        Example Questions:
-            * What is the maximum value in [column]?
-            * What are the statistics for [column]?
-            * What's the average [column]?
-        """
-        if column_name not in df.columns:
-            return {'error': f'Column {column_name} not found'}
-        
-        try:
-            stats = df[column_name].describe()
+        else:
+            counts = df[relevant_colum].value_counts()
             return {
-                'column': column_name,
-                'min': float(stats['min']),
-                'max': float(stats['max']),
-                'mean': float(stats['mean']),
-                'median': float(stats['50%']),
-                'std': float(stats['std'])
+                'counts_by_type': {k: int(v) for k, v in counts.items()},
+                'total_actions': int(len(df))
             }
-        except:
-            return {'error': f'Cannot compute statistics for {column_name}. Ensure it is numeric.'}
 
     @tool
-    def get_value_frequencies(
-        column_name: str,
-        top_n: int = None,
-        normalize: bool = False
-    ) -> Dict:
+    def get_numeric_column_stats(relevant_colum: str,column_name: str, action_type: str = None) -> Dict:
         """
-        Get frequency distribution of values in a column.
+        Get statistics for a numeric column, optionally filtered by action type.
         
         Args:
-            column_name: Column to analyze
-            top_n: Optional limit on number of values to return
-            normalize: Whether to return percentages instead of counts
+            column_name: Column to analyze (e.g., 'Distance', 'Duration_seconds')
+            action_type: Optional filter for specific action type
+            relevant_colum : The column the question is being asked about
             
         Returns:
-            Dictionary with value frequencies
+            Dictionary with statistical summary
             
         Example Questions:
-            * What is the most common value in [column]?
-            * How often does each value appear in [column]?
-            * What's the distribution of values in [column]?
+            * What's the average sprint distance?
+            * What's the maximum acceleration duration?
+            * How long do sprints typically last?
+            * What's the highest magnitude for decelerations?
         """
-        if column_name not in df.columns:
-            return {'error': f'Column {column_name} not found'}
+        if action_type:
+            filtered_df = df[df[relevant_colum] == action_type]
+            if len(filtered_df) == 0:
+                return {'error': f'No data found for action type: {action_type}'}
+            stats = filtered_df[column_name].describe()
+        else:
+            stats = df[column_name].describe()
         
-        value_counts = df[column_name].value_counts(normalize=normalize)
-        if top_n:
-            value_counts = value_counts.head(top_n)
-            
         return {
             'column': column_name,
-            'frequencies': dict(value_counts),
-            'total_unique_values': len(value_counts),
-            'most_common': value_counts.index[0],
-            'least_common': value_counts.index[-1],
-            'is_percentage': normalize
+            'action_type': action_type if action_type else 'all',
+            'min': float(stats['min']),
+            'max': float(stats['max']),
+            'mean': float(stats['mean']),
+            'median': float(stats['50%']),
+            'std': float(stats['std']),
+            'count': int(stats['count'])
         }
+
+    @tool
+    def find_most_common_actions(relevant_colum: str,top_n: int = 3) -> Dict:
+        """
+        Find the most frequent action types.
+        
+        Args:
+            top_n: Number of top actions to return (default: 3)
+            relevant_colum : The column the question is being asked about
+            
+        Returns:
+            Dictionary with frequency analysis
+            
+        Example Questions:
+            * What's the most common action?
+            * What are the top 3 most frequent activities?
+            * Which high intensity actions happen most often?
+            * Show me the action frequency distribution
+        """
+        counts = df[relevant_colum].value_counts()
+        top_actions = counts.head(top_n)
+        
+        return {
+            'top_actions': {
+                action: {
+                    'count': int(count),
+                    'percentage': float((count/len(df) * 100).round(2))
+                }
+                for action, count in top_actions.items()
+            },
+            'total_actions': len(df),
+            'unique_actions': len(counts)
+        }
+
+    def get_all_tools():
+        return [
+            most_common_event_sequences,
+            consecutive_action_frequency,
+            analyze_actions_after_distance,
+            action_frequency_with_distance,
+            multiple_actions_in_period,
+            sequence_ending_with_action,
+            count_specific_actions,
+            get_numeric_column_stats,
+            find_most_common_actions
+        ]
+    
+    return get_all_tools()            
+    # @tool
+    # def get_total_count(column_name: str = None) -> Dict:
+    #     """
+    #     Get the total count of rows, optionally filtered by a specific column.
+        
+    #     Args:
+    #         column_name: Optional column name to count non-null values for
+            
+    #     Returns:
+    #         Dictionary with total count and details
+            
+    #     Example Questions:
+    #         * How many total actions are there?
+    #         * What is the total number of rows?
+    #         * How many non-null values are in [column]?
+    #     """
+    #     if column_name:
+    #         count = df[column_name].count()
+    #         return {
+    #             'count': int(count),
+    #             'column': column_name,
+    #             'total_rows': len(df),
+    #             'percentage_filled': float((count/len(df) * 100).round(2))
+    #         }
+    #     return {
+    #         'count': len(df),
+    #         'details': 'Total number of rows in dataset'
+    #     }
+
+    # @tool
+    # def get_column_stats(column_name: str) -> Dict:
+    #     """
+    #     Get basic statistics for a numeric column.
+        
+    #     Args:
+    #         column_name: Name of the column to analyze
+            
+    #     Returns:
+    #         Dictionary with basic statistics
+            
+    #     Example Questions:
+    #         * What is the maximum value in [column]?
+    #         * What are the statistics for [column]?
+    #         * What's the average [column]?
+    #     """
+    #     if column_name not in df.columns:
+    #         return {'error': f'Column {column_name} not found'}
+        
+    #     try:
+    #         stats = df[column_name].describe()
+    #         return {
+    #             'column': column_name,
+    #             'min': float(stats['min']),
+    #             'max': float(stats['max']),
+    #             'mean': float(stats['mean']),
+    #             'median': float(stats['50%']),
+    #             'std': float(stats['std'])
+    #         }
+    #     except:
+    #         return {'error': f'Cannot compute statistics for {column_name}. Ensure it is numeric.'}
+
+    # @tool
+    # def get_value_frequencies(
+    #     column_name: str,
+    #     top_n: int = None,
+    #     normalize: bool = False
+    # ) -> Dict:
+    #     """
+    #     Get frequency distribution of values in a column.
+        
+    #     Args:
+    #         column_name: Column to analyze
+    #         top_n: Optional limit on number of values to return
+    #         normalize: Whether to return percentages instead of counts
+            
+    #     Returns:
+    #         Dictionary with value frequencies
+            
+    #     Example Questions:
+    #         * What is the most common value in [column]?
+    #         * How often does each value appear in [column]?
+    #         * What's the distribution of values in [column]?
+    #     """
+    #     if column_name not in df.columns:
+    #         return {'error': f'Column {column_name} not found'}
+        
+    #     value_counts = df[column_name].value_counts(normalize=normalize)
+    #     if top_n:
+    #         value_counts = value_counts.head(top_n)
+            
+    #     return {
+    #         'column': column_name,
+    #         'frequencies': dict(value_counts),
+    #         'total_unique_values': len(value_counts),
+    #         'most_common': value_counts.index[0],
+    #         'least_common': value_counts.index[-1],
+    #         'is_percentage': normalize
+    #     }
     # def get_all_tools():
     #     return  [
     # most_common_event_sequences,
@@ -596,17 +714,17 @@ def create_tools(df):
     # multiple_actions_in_period,
     # sequence_ending_with_action]
     # return get_all_tools()
-    def get_all_tools():
-        return [
-            most_common_event_sequences,
-            consecutive_action_frequency,
-            analyze_actions_after_distance,
-            action_frequency_with_distance,
-            multiple_actions_in_period,
-            sequence_ending_with_action,
-            get_total_count,
-            get_column_stats,
-            get_value_frequencies
-        ]
+    # def get_all_tools():
+    #     return [
+    #         most_common_event_sequences,
+    #         consecutive_action_frequency,
+    #         analyze_actions_after_distance,
+    #         action_frequency_with_distance,
+    #         multiple_actions_in_period,
+    #         sequence_ending_with_action,
+    #         get_total_count,
+    #         get_column_stats,
+    #         get_value_frequencies
+    #     ]
     
-    return get_all_tools()
+    # return get_all_tools()
