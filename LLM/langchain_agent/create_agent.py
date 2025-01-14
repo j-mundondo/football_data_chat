@@ -115,7 +115,8 @@ Remember: Keep it simple. Only use tools when absolutely necessary."""
         extra_tools=tools,
         verbose=True,
         handle_parsing_errors=True,
-        agent_type="openai-tools",
+         allow_dangerous_code=True,
+        agent_type="tool-calling",
         memory=memory,
         prefix=system_prompt.format(df_info=str(dataframe.info())),
     )
