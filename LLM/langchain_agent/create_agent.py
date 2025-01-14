@@ -65,7 +65,10 @@ def custom_agent(dataframe, memory=None):
     Q: "What's the most common action?"
     A: I'll use value_counts() on the full dataset: `print(df['High Intensity Action'].value_counts())`
 
-    Remember: Any operation involving counts, frequencies, or statistics must be performed on the entire DataFrame, not just the preview."""
+    Remember: Any operation involving counts, frequencies, or statistics must be performed on the entire DataFrame, not just the preview.
+    
+    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+    """
     formatted_prompt = system_prompt.format(
         total_rows=len(dataframe),
         df_info=str(dataframe.info())
