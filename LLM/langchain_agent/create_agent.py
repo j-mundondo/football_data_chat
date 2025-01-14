@@ -173,7 +173,7 @@ def custom_agent(dataframe, memory=None):
     Example Result: 
     Sprint: 2145
     Acceleration: 1823
-    Therefore, Pitch is the most common action.
+    Therefore, Sprint is the most common action.
 
     Q: "How many total rows?"
     ```python
