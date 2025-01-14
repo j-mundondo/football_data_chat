@@ -79,20 +79,36 @@
 from llm import get_llm
 from tools import create_tools
 import pandas as pd
-from langchain.prompts import PromptTemplate
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 
 def custom_agent(dataframe, memory=None):
-    """Create a minimal custom agent for Groq"""
+    """Create a custom agent optimized for Groq"""
     llm = get_llm()
     tools = create_tools(dataframe)
     
-    system_prompt = """You analyze sports movement data. Use tools only for time-based or sequence analysis. For simple counts, use DataFrame directly.
+    # Simplified prompt that's more compatible with Groq
+    system_prompt = """You are a sports movement analyst. You have access to a pandas DataFrame with athlete performance data.
 
-Example: 
-"Most common action?" → No tools
-"Action sequences?" → Use tools"""
+Simple Rules:
+1. For basic counts and frequencies, use DataFrame directly without tools
+2. Use tools only for:
+   - Time sequences
+   - Complex patterns
+   - Advanced statistics
+3. Start each response by deciding if tools are needed
 
+Examples:
+- "What's the most common action?" → No tools needed
+- "What sequences occur in 5 seconds?" → Use tools
+- "How many sprints?" → No tools needed
+- "Do sprints follow accelerations?" → Use tools
+
+Current Data Summary:
+{df_info}
+
+Remember: Keep it simple. Only use tools when absolutely necessary."""
+
+    # Create the agent with simplified configuration
     agent = create_pandas_dataframe_agent(
         llm=llm,
         df=dataframe,
@@ -101,7 +117,7 @@ Example:
         handle_parsing_errors=True,
         agent_type="openai-tools",
         memory=memory,
-        prefix=system_prompt
+        prefix=system_prompt.format(df_info=str(dataframe.info())),
     )
     
     return agent
