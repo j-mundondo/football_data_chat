@@ -111,10 +111,7 @@ def custom_agent(dataframe, memory=None):
 
 # Remember: Keep it simple. Only use tools when absolutely necessary."""
         # Add total rows to the prompt
-    formatted_prompt = system_prompt.format(
-        total_rows=len(dataframe),
-        df_info=str(dataframe.info())
-    )
+
     
     system_prompt = """You are a sports movement analyst. You have access to a pandas DataFrame with athlete performance data.
 
@@ -150,7 +147,10 @@ def custom_agent(dataframe, memory=None):
     A: I'll use value_counts() on the full dataset: `print(df['High Intensity Action'].value_counts())`
 
     Remember: Any operation involving counts, frequencies, or statistics must be performed on the entire DataFrame, not just the preview."""
-
+    formatted_prompt = system_prompt.format(
+        total_rows=len(dataframe),
+        df_info=str(dataframe.info())
+    )
     # Create the agent with simplified configuration
     agent = create_pandas_dataframe_agent(
         llm=llm,
@@ -162,7 +162,7 @@ def custom_agent(dataframe, memory=None):
          allow_dangerous_code=True,
         agent_type="tool-calling",
         memory=memory,
-        prefix=system_prompt.format(df_info=str(dataframe.info())),
+        prefix=formatted_prompt#system_prompt.format(df_info=str(dataframe.info())),
     )
     
     return agent
