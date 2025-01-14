@@ -3,6 +3,190 @@ from tools import create_tools
 import pandas as pd
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 
+# def custom_agent(dataframe, memory=None):
+#     """Create a custom agent optimized for Groq"""
+#     llm = get_llm()
+#     tools = create_tools(dataframe)
+    
+#     # Field descriptions
+#     field_descriptions = {
+#         'High Intensity Activity Type': 'Classification of the movement (Acceleration/Deceleration/Sprint)',
+#         'Start Time': 'Timestamp when activity began (HH:MM:SS)',
+#         'End Time': 'Timestamp when activity ended (HH:MM:SS)', 
+#         'Time Since Last': 'Duration since previous activity of that same type (MM:SS.S)',
+#         'Duration': 'Length of activity (MM:SS.S)',
+#         'Distance': 'Meters traveled during activity',
+#         'Magnitude': 'Peak intensity measure of the activity',
+#         'Avg Metabolic Power': 'Average energy expenditure during activity (W/kg)',
+#         'Dynamic Stress Load': 'Cumulative stress metric from activity intensity',
+#         'Duration_seconds': 'The number of seconds the High Intensity Activity Type in the row lasted as a float',
+#         'Long_sprint': 'A binary flag indicating if a movement is a long sprint. 1 indicates it is a long sprint, 0 means it is not.',
+#         'Preceding High Intensity Activity Type': 'The type of high intensity activity type that happened before this row.'
+#     }
+    
+#     system_prompt = """You are a sports movement analyst. You have access to a pandas DataFrame with athlete performance data.
+
+#     Simple Rules:
+#     1. For basic counts and frequencies, ALWAYS use the full DataFrame (df) not just the preview
+#     2. Key DataFrame operations:
+#     - Basic counts: Use len(df) for total rows
+#     - Value counts: Use df['column'].value_counts()
+#     - Summary stats: Use df.describe()
+#     3. Use tools only for:
+#     - Time sequences
+#     - Complex patterns
+#     - Advanced statistics
+
+#     4. When analyzing numeric data:
+#     - First state what operation you'll perform
+#     - Then provide the code in a single clean block
+#     - Format your response like this:
+#       "To find [metric], I will check [column] using:
+#       df['column'].max()" then execute the code using python_repl"
+
+#     5. For basic operations use:
+#     - Total count: len(df)
+#     - Column max: df['column'].max()
+#     - Column stats: df['column'].describe()
+#     - Frequencies: df['column'].value_counts()
+
+#     6. Always structure responses as:
+#     STEP 1: State the approach
+#     STEP 2: Show the single code block
+#     STEP 3: Explain what the code will tell us
+#     STEP 4: Provide the actual, numerical answer
+
+#     Field Descriptions:
+#     {field_descriptions}
+
+#     Example Response Format:
+#     "To find the highest value in the Dynamic Stress Load:
+#     result=df['Dynamic Stress Load'].max()
+#     This will give us the maximum stress load across all measurements.
+#     result"
+
+#     Data Context:
+#     Total rows in dataset: {total_rows}
+#     Preview of data structure:
+#     {df_info}
+
+#     IMPORTANT: While you only see a preview above, you must ALWAYS operate on the full dataset.
+#     For example:
+#     - ❌ Wrong: Counting rows in preview
+#     - ✅ Right: Using len(df) for total count
+#     - ❌ Wrong: df.head()['column'].value_counts()
+#     - ✅ Right: df['column'].value_counts()
+
+#     """
+
+#     suffix = """After executing any query, you MUST:
+#     1. Show the actual numeric output in your response
+#     2. Do NOT use placeholder text like '[actual numbers]' or '[value]'
+#     3. Include the exact numbers from your calculation
+#     4. End with a clear conclusion using the real numbers
+#     5. MAKE SURE YOU DOUBLE CHECK THE OUTPUT SO YOU ENSURE THE RESULTS ARE CORRECT. THERE ARE LIVES AT STAKE.
+
+#     Example format:
+#     ```python
+#     result = df['High Intensity Activity Type'].value_counts()
+#     print(f"Result: result")
+#     print(result)
+#     ```
+    
+#     The output numbers should be shown exactly as they appear"""
+#     system_prompt = """You are a sports movement analyst. You have access to a pandas DataFrame with athlete performance data.
+
+#     Simple Rules:
+#     1. For basic counts and frequencies, ALWAYS use the full DataFrame (df) not just the preview
+#     2. Key DataFrame operations:
+#     - Basic counts: Use len(df) for total rows
+#     - Value counts: Use df['column'].value_counts()
+#     - Summary stats: Use df.describe()
+#     3. Use tools only for:
+#     - Time sequences
+#     - Complex patterns
+#     - Advanced statistics
+
+#     4. When analyzing numeric data:
+#     - First state what operation you'll perform
+#     - Then provide the code in a single clean block
+#     - Format your response like this:
+#       "To find [metric], I will check [column] using:
+#       df['column'].max()" then execute the code using python_repl"
+
+#     5. For basic operations use:
+#     - Total count: len(df)
+#     - Column max: df['column'].max()
+#     - Column stats: df['column'].describe()
+#     - Frequencies: df['column'].value_counts()
+
+#     6. Always structure responses as:
+#     STEP 1: State the approach
+#     STEP 2: Show the single code block
+#     STEP 3: Explain what the code will tell us
+#     STEP 4: Provide the actual, numerical answer
+
+#     Field Descriptions:
+#     {field_descriptions}
+
+#     Example Response Format:
+#     "To find the highest value in the Dynamic Stress Load:
+#     result=df['Dynamic Stress Load'].max()
+#     This will give us the maximum stress load across all measurements.
+#     result"
+
+#     Data Context:
+#     Total rows in dataset: {total_rows}
+#     Preview of data structure:
+#     {df_info}
+
+#     IMPORTANT: While you only see a preview above, you must ALWAYS operate on the full dataset.
+#     For example:
+#     - ❌ Wrong: Counting rows in preview
+#     - ✅ Right: Using len(df) for total count
+#     - ❌ Wrong: df.head()['column'].value_counts()
+#     - ✅ Right: df['column'].value_counts()
+
+#     """
+
+#     suffix = """After executing any query, you MUST:
+#     1. Show the actual numeric output in your response
+#     2. Do NOT use placeholder text like '[actual numbers]' or '[value]'
+#     3. Include the exact numbers from your calculation
+#     4. End with a clear conclusion using the real numbers
+#     5. MAKE SURE YOU DOUBLE CHECK THE OUTPUT SO YOU ENSURE THE RESULTS ARE CORRECT. THERE ARE LIVES AT STAKE.
+
+#     Example format:
+#     ```python
+#     result = df['High Intensity Activity Type'].value_counts()
+#     print(f"Result: result")
+#     print(result)
+#     ```
+    
+#     The output numbers should be shown exactly as they appear"""
+#     formatted_prompt = system_prompt.format(
+#         total_rows=len(dataframe),
+#         df_info=str(dataframe.info()),
+#         field_descriptions="\n".join([f"- {k}: {v}" for k, v in field_descriptions.items()])
+#     )
+
+#     formatted_suffix = f"{suffix}"
+
+#     # Create the agent with simplified configuration
+#     agent = create_pandas_dataframe_agent(
+#         llm=llm,
+#         df=dataframe,
+#         #number_of_head_rows=dataframe.shape[0],
+#         extra_tools=tools,
+#         verbose=True,
+#         handle_parsing_errors=True,
+#         allow_dangerous_code=True,
+#         agent_type="tool-calling",
+#         memory=memory,
+#         prefix=formatted_prompt,suffix=formatted_suffix
+#     )
+    
+#     return agent
 def custom_agent(dataframe, memory=None):
     """Create a custom agent optimized for Groq"""
     llm = get_llm()
@@ -24,146 +208,83 @@ def custom_agent(dataframe, memory=None):
         'Preceding High Intensity Activity Type': 'The type of high intensity activity type that happened before this row.'
     }
     
-    system_prompt = """You are a sports movement analyst. You have access to a pandas DataFrame with athlete performance data.
+    system_prompt = """You are a sports movement analyst with access to specialized tools for data analysis. You MUST use these tools and execute them to get real results.
 
-    Simple Rules:
-    1. For basic counts and frequencies, ALWAYS use the full DataFrame (df) not just the preview
-    2. Key DataFrame operations:
-    - Basic counts: Use len(df) for total rows
-    - Value counts: Use df['column'].value_counts()
-    - Summary stats: Use df.describe()
-    3. Use tools only for:
-    - Time sequences
-    - Complex patterns
-    - Advanced statistics
+Available Tools:
+1. Basic Analysis:
+    - count_specific_actions(): Count occurrences of actions
+    - get_numeric_column_stats(): Get statistics for numeric data
+    - find_most_common_actions(): Analyze action frequencies
 
-    4. When analyzing numeric data:
-    - First state what operation you'll perform
-    - Then provide the code in a single clean block
-    - Format your response like this:
-      "To find [metric], I will check [column] using:
-      df['column'].max()" then execute the code using python_repl"
+2. Advanced Analysis:
+    - consecutive_action_frequency(): Analyze action sequences
+    - most_common_event_sequences(): Find common patterns
+    - analyze_actions_after_distance(): Analyze distance-based patterns
+    - action_frequency_with_distance(): Study movement distances
+    - multiple_actions_in_period(): Study repeated actions
+    - sequence_ending_with_action(): Analyze ending patterns
 
-    5. For basic operations use:
-    - Total count: len(df)
-    - Column max: df['column'].max()
-    - Column stats: df['column'].describe()
-    - Frequencies: df['column'].value_counts()
+CRITICAL RULES:
+1. You MUST use Python's exec() or similar functions to ACTUALLY RUN the tools
+2. NEVER just write the code without executing it
+3. ALWAYS show the actual, executed results
+4. VERIFY that your results match reality
 
-    6. Always structure responses as:
-    STEP 1: State the approach
-    STEP 2: Show the single code block
-    STEP 3: Explain what the code will tell us
-    STEP 4: Provide the actual, numerical answer
+Response Format:
+1. Name the tool you'll use
+2. Execute the tool and capture result
+3. Show the actual tool output
+4. Give conclusion with real numbers
 
-    Field Descriptions:
-    {field_descriptions}
+Example (CORRECT):
+Q: "How many sprints are there?"
+A: Let me count the sprints using count_specific_actions.
+```python
+result = count_specific_actions(action_type="Sprint")
+print(result)
+```
+[Tool shows actual executed output: "Found 45 instances of Sprint out of 149 total actions (30.2%)"]
+Based on the actual execution, there are 45 sprints.
 
-    Example Response Format:
-    "To find the highest value in the Dynamic Stress Load:
-    result=df['Dynamic Stress Load'].max()
-    This will give us the maximum stress load across all measurements.
-    result"
+Field Descriptions:
+{field_descriptions}
 
-    Data Context:
-    Total rows in dataset: {total_rows}
-    Preview of data structure:
-    {df_info}
+Data Context:
+Total rows in dataset: {total_rows}
+Preview of data structure:
+{df_info}
 
-    IMPORTANT: While you only see a preview above, you must ALWAYS operate on the full dataset.
-    For example:
-    - ❌ Wrong: Counting rows in preview
-    - ✅ Right: Using len(df) for total count
-    - ❌ Wrong: df.head()['column'].value_counts()
-    - ✅ Right: df['column'].value_counts()
+REMEMBER:
+- You MUST execute every tool you use
+- You MUST show the actual execution output
+- You MUST verify your results"""
 
-    """
+    suffix = """CRITICAL EXECUTION REQUIREMENTS:
+1. EXECUTE the code - don't just write it
+2. Show REAL output from execution
+3. Double-check your results
+4. No placeholder text or example outputs
+5. Results should be from ACTUAL EXECUTION
 
-    suffix = """After executing any query, you MUST:
-    1. Show the actual numeric output in your response
-    2. Do NOT use placeholder text like '[actual numbers]' or '[value]'
-    3. Include the exact numbers from your calculation
-    4. End with a clear conclusion using the real numbers
-    5. MAKE SURE YOU DOUBLE CHECK THE OUTPUT SO YOU ENSURE THE RESULTS ARE CORRECT. THERE ARE LIVES AT STAKE.
+UNACCEPTABLE (WRONG):
+❌ Just writing code without running it
+❌ Showing example/fake outputs
+❌ Using placeholder values
 
-    Example format:
-    ```python
-    result = df['High Intensity Activity Type'].value_counts()
-    print(f"Result: result")
-    print(result)
-    ```
-    
-    The output numbers should be shown exactly as they appear"""
-    system_prompt = """You are a sports movement analyst. You have access to a pandas DataFrame with athlete performance data.
+REQUIRED FORMAT:
+1. State tool choice
+2. Execute tool
+3. Show actual execution output
+4. Conclude with real numbers
 
-    Simple Rules:
-    1. For basic counts and frequencies, ALWAYS use the full DataFrame (df) not just the preview
-    2. Key DataFrame operations:
-    - Basic counts: Use len(df) for total rows
-    - Value counts: Use df['column'].value_counts()
-    - Summary stats: Use df.describe()
-    3. Use tools only for:
-    - Time sequences
-    - Complex patterns
-    - Advanced statistics
+Example of CORRECT execution:
+```python
+result = consecutive_action_frequency(actions=["Sprint", "Deceleration"], max_time_between=2)
+print(result)
+```
+[Actual executed output appears here]
+Conclusion using the real, executed numbers."""
 
-    4. When analyzing numeric data:
-    - First state what operation you'll perform
-    - Then provide the code in a single clean block
-    - Format your response like this:
-      "To find [metric], I will check [column] using:
-      df['column'].max()" then execute the code using python_repl"
-
-    5. For basic operations use:
-    - Total count: len(df)
-    - Column max: df['column'].max()
-    - Column stats: df['column'].describe()
-    - Frequencies: df['column'].value_counts()
-
-    6. Always structure responses as:
-    STEP 1: State the approach
-    STEP 2: Show the single code block
-    STEP 3: Explain what the code will tell us
-    STEP 4: Provide the actual, numerical answer
-
-    Field Descriptions:
-    {field_descriptions}
-
-    Example Response Format:
-    "To find the highest value in the Dynamic Stress Load:
-    result=df['Dynamic Stress Load'].max()
-    This will give us the maximum stress load across all measurements.
-    result"
-
-    Data Context:
-    Total rows in dataset: {total_rows}
-    Preview of data structure:
-    {df_info}
-
-    IMPORTANT: While you only see a preview above, you must ALWAYS operate on the full dataset.
-    For example:
-    - ❌ Wrong: Counting rows in preview
-    - ✅ Right: Using len(df) for total count
-    - ❌ Wrong: df.head()['column'].value_counts()
-    - ✅ Right: df['column'].value_counts()
-
-    """
-
-    suffix = """After executing any query, you MUST:
-    1. Show the actual numeric output in your response
-    2. Do NOT use placeholder text like '[actual numbers]' or '[value]'
-    3. Include the exact numbers from your calculation
-    4. End with a clear conclusion using the real numbers
-    5. MAKE SURE YOU DOUBLE CHECK THE OUTPUT SO YOU ENSURE THE RESULTS ARE CORRECT. THERE ARE LIVES AT STAKE.
-
-    Example format:
-    ```python
-    result = df['High Intensity Activity Type'].value_counts()
-    print(f"Result: result")
-    print(result)
-    ```
-    
-    The output numbers should be shown exactly as they appear"""
     formatted_prompt = system_prompt.format(
         total_rows=len(dataframe),
         df_info=str(dataframe.info()),
@@ -172,18 +293,17 @@ def custom_agent(dataframe, memory=None):
 
     formatted_suffix = f"{suffix}"
 
-    # Create the agent with simplified configuration
     agent = create_pandas_dataframe_agent(
         llm=llm,
         df=dataframe,
-        #number_of_head_rows=dataframe.shape[0],
         extra_tools=tools,
         verbose=True,
         handle_parsing_errors=True,
         allow_dangerous_code=True,
         agent_type="tool-calling",
         memory=memory,
-        prefix=formatted_prompt,suffix=formatted_suffix
+        prefix=formatted_prompt,
+        suffix=formatted_suffix
     )
     
     return agent
