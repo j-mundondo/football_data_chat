@@ -87,29 +87,56 @@ def custom_agent(dataframe, memory=None):
     tools = create_tools(dataframe)
     
     # Simplified prompt that's more compatible with Groq
+#     system_prompt = """You are a sports movement analyst. You have access to a pandas DataFrame with athlete performance data.
+
+# Simple Rules:
+# 1. For basic counts and frequencies, use DataFrame directly without tools
+# 2. Use tools only for:
+#    - Time sequences
+#    - Complex patterns
+#    - Advanced statistics
+# 3. Start each response by deciding if tools are needed
+
+# Examples:
+# - "What's the most common action?" → No tools needed
+# - "What sequences occur in 5 seconds?" → Use tools
+# - "How many sprints?" → No tools needed
+# - "Do sprints follow accelerations?" → Use tools
+
+# Current Data Summary:
+# {df_info}
+
+# Please note that the above is only a representatitve set using df.head(). So for question that don't require tools e.g. how many
+# rows in the data you can't only consider the 5 rows you see. you still have to do something to the effect of len(df).
+
+# Remember: Keep it simple. Only use tools when absolutely necessary."""
+
     system_prompt = """You are a sports movement analyst. You have access to a pandas DataFrame with athlete performance data.
 
-Simple Rules:
-1. For basic counts and frequencies, use DataFrame directly without tools
-2. Use tools only for:
-   - Time sequences
-   - Complex patterns
-   - Advanced statistics
-3. Start each response by deciding if tools are needed
+    Simple Rules:
+    1. For basic counts and frequencies, ALWAYS use the full DataFrame (df) not just the preview
+    2. Key DataFrame operations:
+    - Basic counts: Use len(df) for total rows
+    - Value counts: Use df['column'].value_counts()
+    - Summary stats: Use df.describe()
+    3. Use tools only for:
+    - Time sequences
+    - Complex patterns
+    - Advanced statistics
 
-Examples:
-- "What's the most common action?" → No tools needed
-- "What sequences occur in 5 seconds?" → Use tools
-- "How many sprints?" → No tools needed
-- "Do sprints follow accelerations?" → Use tools
+    Data Context:
+    Total rows in dataset: {total_rows}
+    Preview of data structure:
+    {df_info}
 
-Current Data Summary:
-{df_info}
+    IMPORTANT: While you only see a preview above, you must ALWAYS operate on the full dataset.
+    For example:
+    - ❌ Wrong: Counting rows in preview
+    - ✅ Right: Using len(df) for total count
+    - ❌ Wrong: df.head()['column'].value_counts()
+    - ✅ Right: df['column'].value_counts()
 
-Please note that the above is only a representatitve set using df.head(). So for question that don't require tools e.g. how many
-rows in the data you can't only consider the 5 rows you see. you still have to do something to the effect of len(df).
-
-Remember: Keep it simple. Only use tools when absolutely necessary."""
+    Remember: Any operation involving counts, frequencies, or statistics must be performed on the entire DataFrame, not just the preview."""
 
     # Create the agent with simplified configuration
     agent = create_pandas_dataframe_agent(
