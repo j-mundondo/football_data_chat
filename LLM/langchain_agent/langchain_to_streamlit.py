@@ -53,11 +53,12 @@ if 'agent' not in st.session_state:
 st.image(LOGO_URL, width=100)
 st.title("Football Movement Analysis (BETA) ⚽")
 st.write("This chat app is designed to answer questions regarding high intentisity activities recorded in a football match.")
-st.write('''Examples of sample questions include : \n 1. What are the most common 2 event sequences of high-intensity activities within 4 seconds?   
-         \n 2.   
-         \n 3.     
-         \n 4.     
-         \n 5.  ''')
+st.write('''Examples of sample questions include : 
+         \n 1. What are the most common 2 event sequences of high-intensity activities within 4 seconds?   
+         \n 2. How often do players accelerate and then immediately (within 2 seconds) transition into a sprint?  
+         \n 3. How frequently do players decelerate right after completing a sprint?    
+         \n 4. What is the most common action after sprints of >20m?    
+         \n 5. How often do players have to complete multiple long sprints in a short period?  ''')
 
 # Sidebar Debug Section
 with st.sidebar:
