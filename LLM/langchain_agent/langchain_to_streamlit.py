@@ -117,7 +117,10 @@ if uploaded_file is not None:
 
 # Display existing chat history
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
+    # with st.chat_message(message["role"]):
+    #     st.markdown(message["content"])
+    avatar = LOGO_URL if message["role"] == "assistant" else None
+    with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
 # Chat input and response
@@ -164,7 +167,7 @@ if prompt := st.chat_input("What would you like to analyse?"):
                     
                     # Add to message history
                     st.session_state.messages.append(
-                        {"role": "assistant", "content": response["output"]}
+                        {"role": "assistant", "content": response["output"],"avatar": LOGO_URL}
                     )
 
                     # Show memory after response if in debug mode
