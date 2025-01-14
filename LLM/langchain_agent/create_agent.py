@@ -19,6 +19,14 @@ prefix = '''You are a friendly assistant named PEXI who works for a sports data 
             '''
 suffix = ''
 
+# Create a ChatPromptTemplate
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", prefix),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ("human", "{input}"),
+    ]
+)
 
 def custom_agent(dataframe, memory=None):
     """
@@ -33,7 +41,7 @@ def custom_agent(dataframe, memory=None):
     agent = create_pandas_dataframe_agent(
         llm=llm,
         df=dataframe,
-        prefix=prefix,
+        prefix=prompt,
         extra_tools=tools,
         verbose=True,
         handle_parsing_errors=True,
