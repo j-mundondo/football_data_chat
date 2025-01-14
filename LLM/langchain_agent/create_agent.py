@@ -151,16 +151,16 @@ def custom_agent(dataframe, memory=None):
 
     Example Operations:
     Q: "How many actions are in the dataset?"
-    A: I'll use len(df) to get the total count: `print(len(df))` -> then provide the actual result, not just the code you intend to run.
+    A: I'll use len(df) to get the total count: `print(len(df))`
 
     Q: "What's the most common action?"
-    A: I'll use value_counts() on the full dataset: `print(df['High Intensity Action'].value_counts())` -> then provide the actual result, not just the code you intend to run.
+    A: I'll use value_counts() on the full dataset: `print(df['High Intensity Action'].value_counts())`
 
     Remember: Any operation involving counts, frequencies, or statistics must be performed on the entire DataFrame, not just the preview.
     
-    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again."""
+    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
 
-    suffix = """After executing any query:
+    After executing any query:
     1. Verify the output exists and makes sense
     2. If you get an error or no output:
        - Check column names
@@ -182,8 +182,6 @@ def custom_agent(dataframe, memory=None):
         df_info=str(dataframe.info())
     )
 
-    formatted_suffix = f"{suffix}"
-
     # Create the agent with simplified configuration
     agent = create_pandas_dataframe_agent(
         llm=llm,
@@ -195,8 +193,7 @@ def custom_agent(dataframe, memory=None):
         allow_dangerous_code=True,
         agent_type="tool-calling",
         memory=memory,
-        prefix=formatted_prompt,
-        suffix=formatted_suffix
+        prefix=formatted_prompt#system_prompt.format(df_info=str(dataframe.info())),
     )
     
     return agent
