@@ -420,6 +420,7 @@ def custom_agent(dataframe, memory=None):
     2. Do NOT use placeholder text like '[actual numbers]' or '[value]'
     3. Include the exact numbers from your calculation
     4. End with a clear conclusion using the real numbers
+    5. MAKE SURE YOU DOUBLE CHECK THE OUTPUT SO YOU ENSURE THE RESULTS ARE CORRECT. THERE ARE LIVES AT STAKE.
 
     Example format:
     ```python
