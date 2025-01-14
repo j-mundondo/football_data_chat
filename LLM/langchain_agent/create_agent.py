@@ -112,7 +112,7 @@ Remember: Keep it simple. Only use tools when absolutely necessary."""
     agent = create_pandas_dataframe_agent(
         llm=llm,
         df=dataframe,
-        number_of_head_rows=dataframe.shape[0],
+        #number_of_head_rows=dataframe.shape[0],
         extra_tools=tools,
         verbose=True,
         handle_parsing_errors=True,
