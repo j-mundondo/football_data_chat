@@ -415,22 +415,25 @@ def custom_agent(dataframe, memory=None):
     
     You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again."""
 
-    suffix = """After executing any query:
-    1. Verify the output exists and makes sense
-    2. If you get an error or no output:
-       - Check column names
-       - Verify the operation
-       - Try again with corrected code
-    3. ALWAYS show the numeric result
-    4. End with "Based on the actual data, [conclusion with numbers]"
-    
-    Example of correct response:
+    suffix = """After executing any query, you MUST:
+    1. Show the actual numeric output in your response
+    2. Do NOT use placeholder text like '[actual numbers]' or '[value]'
+    3. Include the exact numbers from your calculation
+    4. End with a clear conclusion using the real numbers
+
+    Example format:
     ```python
-    result = df['column'].value_counts()
-    print(f"Result: [result]")
+    result = df['High Intensity Activity Type'].value_counts()
+    print(f"Result:")
+    print(result)
     ```
-    Result: result from the query
-    Based on the actual data, X has Y occurrences."""
+    
+    The output numbers should be shown exactly as they appear, for example:
+    Sprint: 45
+    Acceleration: 32
+    Deceleration: 28
+    
+    Based on this data, Sprint is the most common with 45 occurrences."""
 
     formatted_prompt = system_prompt.format(
         total_rows=len(dataframe),
