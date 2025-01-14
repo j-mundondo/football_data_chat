@@ -100,34 +100,34 @@ def custom_agent(dataframe, memory=None):
 
     Available Tools (YOU MUST USE THESE):
     1. For Basic Analysis:
-    - get_total_count(): For counting rows
-    - get_column_stats(): For numeric statistics
-    - get_value_frequencies(): For value distributions and finding most common values
+        - count_specific_actions(): For counting action types (e.g., "How many sprints?", "Count all decelerations")
+        - get_numeric_column_stats(): For statistics on numeric columns (e.g., "What's the average sprint distance?")
+        - find_most_common_actions(): For frequency analysis (e.g., "What are the top 3 most frequent activities?")
 
     2. For Complex Analysis:
-    - most_common_event_sequences(): For pattern analysis
-    - consecutive_action_frequency(): For action sequences
-    - analyze_actions_after_distance(): For distance-based analysis
-    - action_frequency_with_distance(): For specific movement patterns
-    - multiple_actions_in_period(): For repeated actions
-    - sequence_ending_with_action(): For ending patterns
+        - most_common_event_sequences(): For identifying common patterns (e.g., "What actions typically follow sprints?")
+        - consecutive_action_frequency(): For analyzing action sequences (e.g., "How often do sprints follow accelerations?")
+        - analyze_actions_after_distance(): For distance-based patterns (e.g., "What follows sprints over 20m?")
+        - action_frequency_with_distance(): For analyzing movement magnitudes (e.g., "How often are sprints longer than 30m?")
+        - multiple_actions_in_period(): For repeated actions (e.g., "How often do players sprint twice in 10 seconds?")
+        - sequence_ending_with_action(): For analyzing action chains (e.g., "What leads to decelerations?")
 
     ALWAYS answer questions using this format:
     1. "I'll use [specific tool name] to analyze this"
-    2. Execute the tool and capture its result
+    2. Execute the tool with appropriate parameters
     3. Show the complete numeric output
     4. Provide conclusion with exact numbers
 
     Example Correct Answer:
-    Q: "What's the most common activity?"
-    A: I'll use get_value_frequencies to find the distribution of activities.
+    Q: "How many sprints are there?"
+    A: I'll use count_specific_actions to find the number of sprints.
     Tool execution:
     ```python
-    result = get_value_frequencies("High Intensity Activity Type")
+    result = count_specific_actions(action_type="Sprint")
     print(result)
     ```
-    PUT ANSWER HERE
-    Based on the results, Sprint is most common with 45 occurrences (30%).
+    Tool output: {'action_type': 'Sprint', 'count': 45, 'percentage': 30.2, 'total_actions': 149}
+    Based on the data, there are exactly 45 sprints, representing 30.2% of all actions.
 
     Field Descriptions:
     {field_descriptions}
@@ -160,12 +160,21 @@ def custom_agent(dataframe, memory=None):
     ✅ Specific conclusion with real numbers
 
     Example:
+    Q: "What's the most common action?"
     ```python
-    result = get_value_frequencies("High Intensity Activity Type")
+    result = find_most_common_actions(top_n=3)
     print(result)
     ```
-    Tool output shows: {'frequencies': {'Sprint': 45, 'Acceleration': 32}, ...}
-    Based on this data, Sprints are most common with exactly 45 occurrences."""
+    Tool output: {
+        'top_actions': {
+            'Sprint': {'count': 45, 'percentage': 30.2},
+            'Acceleration': {'count': 32, 'percentage': 21.5},
+            'Deceleration': {'count': 28, 'percentage': 18.8}
+        },
+        'total_actions': 149,
+        'unique_actions': 3
+    }
+    Based on this data, Sprints are most common with exactly 45 occurrences (30.2% of all actions), followed by Accelerations (32 occurrences, 21.5%) and Decelerations (28 occurrences, 18.8%)."""
     formatted_prompt = system_prompt.format(
         total_rows=len(dataframe),
         df_info=str(dataframe.info()),
