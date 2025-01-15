@@ -57,11 +57,11 @@ def add_time_since_last_any_action(df):
 #     df = df.drop(['Session', 'Drill'], axis=1)
 #     return df
 
-# def full_preprocess(df):
-#     df = standardise_start_times(df)
-#     df = add_time_since_last_any_action(df)
-#     if 'Session' and 'Player' in df.columns:
-#         df = all_player_analysis(df)
-#     if 'HIA Type' in df.columns:
-#         df = df.rename(columns={'HIA Type': 'High Intensity Activity Type'})
-#     return df
+def full_preprocess(df):
+    df = standardise_start_times(df)
+    df = add_time_since_last_any_action(df)
+    # if 'Session' and 'Player' in df.columns:
+    #     df = all_player_analysis(df)
+    # if 'HIA Type' in df.columns:
+    #     df = df.rename(columns={'HIA Type': 'High Intensity Activity Type'})
+    return df
