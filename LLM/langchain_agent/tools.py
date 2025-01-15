@@ -66,13 +66,12 @@ def create_tools(df):
                 sequences.append(tuple(current_sequence[-n_actions:]))
         
         sequence_counts = pd.Series(sequences).value_counts()
-        
+        print("These are the results :")
         return {
             'sequences': list(sequence_counts.index),
             'counts': list(sequence_counts.values),
             'percentages': list((sequence_counts.values / len(sequences) * 100))
         }
-    #most_common_event_sequences(df, n_actions=4)
 
     @tool
     def consecutive_action_frequency(
