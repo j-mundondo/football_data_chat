@@ -595,15 +595,15 @@ def create_tools(df):
 
     def get_all_tools():
         return [
-            most_common_event_sequences,
-            consecutive_action_frequency,
-            analyze_actions_after_distance,
-            action_frequency_with_distance,
-            multiple_actions_in_period,
-            sequence_ending_with_action
-            # count_specific_actions,
-            # get_numeric_column_stats,
-            # find_most_common_actions
+            most_common_event_sequences
+            ,consecutive_action_frequency
+            ,analyze_actions_after_distance
+            ,action_frequency_with_distance
+            ,multiple_actions_in_period
+            ,sequence_ending_with_action
+            ,count_specific_actions
+            ,get_numeric_column_stats
+            ,find_most_common_actions
         ]
     
     return get_all_tools()            
