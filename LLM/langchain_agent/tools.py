@@ -26,6 +26,7 @@ import pandas as pd
 def create_tools(df):
     @tool
     def most_common_event_sequences(
+        df=df,
         n_actions: int = 3,
         max_time_between: float = 10.0
     ) -> Dict:
