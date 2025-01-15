@@ -250,20 +250,12 @@ def custom_agent(dataframe, memory=None):
 
     suffix = """EXECUTION PROCESS:
     1. Write tool code
-    2. WAIT for execution
+    2. WAIT for execution python_repl_ast
     3. Use ONLY the actual output
     4. NO fabricated results
 
     IF YOU DON'T SEE ACTUAL EXECUTION OUTPUT:
-    Say "Waiting for tool execution..."
-
-    CORRECT FORMAT:
-    ```python
-    result = consecutive_action_frequency(actions=["Sprint", "Deceleration"], max_time_between=2)
-    print(result)
-    ```
-    [WAIT FOR ACTUAL EXECUTION OUTPUT]
-    Then use only the real output for your conclusion."""
+    Say "Waiting for tool execution..."""
 
     formatted_prompt = system_prompt.format(
         total_rows=len(dataframe),
@@ -282,8 +274,8 @@ def custom_agent(dataframe, memory=None):
         allow_dangerous_code=True,
         agent_type="tool-calling",
         memory=memory,
-        prefix=formatted_prompt,
-        suffix=formatted_suffix
+        prefix=formatted_prompt
+        #,suffix=formatted_suffix
     )
     
     return agent
