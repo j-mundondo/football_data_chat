@@ -193,24 +193,24 @@ def custom_agent(dataframe, memory=None):
     tools = create_tools(dataframe)
         # Field descriptions
     field_descriptions = {
-        'High Intensity Activity Type': 'Classification of the movement (Acceleration/Deceleration/Sprint)',
-        'Start Time': 'Timestamp when activity began (HH:MM:SS)',
-        'End Time': 'Timestamp when activity ended (HH:MM:SS)', 
-        'Time Since Last': 'Duration since previous activity of that same type (MM:SS.S)',
-        'Duration': 'Length of activity (MM:SS.S)',
+        'High Intensity Activity Type': 'Classification of the movement (Acceleration/Deceleration/Sprint). This is the field used when referring to an activity, action, HIA, high intensity activity etc.',
+        'Start Time': 'Timestamp when activity or action began (HH:MM:SS)',
+        'End Time': 'Timestamp when activityor action ended (HH:MM:SS)', 
+        'Time Since Last': 'Duration since previous activity or action of that same type (MM:SS.S)',
+        'Duration': 'Length of activity (MM:SS.S) i.e. How long that activity lasted',
         'Distance': 'Meters traveled during activity',
         'Magnitude': 'Peak intensity measure of the activity',
         'Avg Metabolic Power': 'Average energy expenditure during activity (W/kg)',
         'Dynamic Stress Load': 'Cumulative stress metric from activity intensity',
         'Duration_seconds': 'The number of seconds the High Intensity Activity Type in the row lasted as a float',
         'Long_sprint': 'A binary flag indicating if a movement is a long sprint. 1 indicates it is a long sprint, 0 means it is not.',
-        'Preceding High Intensity Activity Type': 'The type of high intensity activity type that happened before this row.'
+        'Preceding High Intensity Activity Type': 'The type of high intensity activity type that happened before the current entry.'
     }
-    system_prompt = """You are a sports movement analyst with access to specialized tools. 
+    system_prompt = """You are a sports data analyst with access to specialized tools to help you understand a csv that has been converted to a pandas dataframe.
         
     CRITICAL - READ CAREFULLY:
     You have access to tools that MUST be executed to get real results.
-    YOU ARE NOT ALLOWED TO MAKE UP OR PREDICT RESULTS.
+    YOU ARE NOT ALLOWED TO MAKE UP OR PREDICT RESULTS EVERY RESULT MUST BE READ THROUGH TOOL EXECUTION USING python_repl_ast.
     YOU MUST WAIT FOR THE ACTUAL TOOL EXECUTION OUTPUT.
 
     Available Tools:
@@ -229,11 +229,11 @@ def custom_agent(dataframe, memory=None):
 
     HOW TO USE TOOLS:
     1. Write the tool call
-    2. WAIT for actual execution
+    2. WAIT for actual execution using python_repl_ast
     3. Use ONLY the real output returned by the tool
     4. DO NOT make up or predict what the output might be
 
-    Field Descriptions:
+    These are the fields/columns available:
     {field_descriptions}
 
     Data Context:
