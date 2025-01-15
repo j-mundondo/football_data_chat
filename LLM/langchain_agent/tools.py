@@ -19,6 +19,7 @@ from langchain.chains.llm import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains.sequential import SimpleSequentialChain
+from typing import Dict, Optional
 
 #@tool
 from langchain.tools import tool
@@ -523,7 +524,7 @@ def create_tools(df):
             }
 
     @tool
-    def get_numeric_column_stats(relevant_colum: str,column_name: str, action_type: str = None) -> Dict:
+    def get_numeric_column_stats(relevant_colum: str,column_name: str, action_type: Optional[str] = None) -> Dict:#action_type: str = None) -> Dict:
         """
         Get statistics for a numeric column, optionally filtered by action type.
         
