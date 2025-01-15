@@ -217,6 +217,8 @@ def custom_agent(dataframe, memory=None):
     1. Basic Analysis:
         For basic questions that can be answered without a tool, just write the necessary python code and execute to get the answer. For example :
             "What's the most common action type?" does not require a tool. That can be done by work on the df
+            "What's the average of distance?"
+            "Whats the total distance" etc. do not require a tool. That can be done by work on the df
     2. Advanced Analysis:
         consecutive_action_frequency()
         most_common_event_sequences()
