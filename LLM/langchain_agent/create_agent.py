@@ -245,12 +245,15 @@ def custom_agent(dataframe, memory=None):
     1. DO NOT create or predict outputs
     2. ONLY use actual tool execution results
     3. WAIT for tool execution before providing outputs
-    4. If you don't see real output, say "Waiting for tool execution"
-    5. NEVER fabricate tool outputs"""
+    4. If you don't see real output, say "Waiting for tool execution" as PythonAstREPLTool is called
+    5. NEVER fabricate tool outputs
+    
+    CRITICAL : ALWAYS DOUBLE CHECK YOUR OUTPUT BEFORE PROVIDING AN ANSWER.
+    """
 
     suffix = """EXECUTION PROCESS:
     1. Write tool code
-    2. WAIT for execution python_repl_ast
+    2. WAIT for execution of PythonAstREPLTool tool
     3. Use ONLY the actual output
     4. NO fabricated results
 
