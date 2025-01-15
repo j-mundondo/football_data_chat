@@ -215,10 +215,9 @@ def custom_agent(dataframe, memory=None):
 
     Available Tools:
     1. Basic Analysis:
-        count_specific_actions()
-        get_numeric_column_stats()
-        find_most_common_actions()
-
+        For basic questions that can be answered without a tool, just write the necessary python code and execute to get the answer. For example :
+            "What's the most common action type?" does not require a tool. That can be done by work on the df e.g. first_index, first_value = next(df['High Intensity Activity Type'].value_counts().items())
+            or similar
     2. Advanced Analysis:
         consecutive_action_frequency()
         most_common_event_sequences()
