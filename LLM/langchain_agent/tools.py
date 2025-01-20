@@ -1,11 +1,8 @@
 import pandas as pd
 from langchain_core.tools import tool
-from typing import Dict, List
-from typing import Dict, Optional
-
-#@tool
+from typing import Dict, List, Optional
 from langchain.tools import tool
-import pandas as pd
+
 def create_tools(df):
     @tool
     def most_common_event_sequences(
@@ -584,130 +581,6 @@ def create_tools(df):
             ,action_frequency_with_distance
             ,multiple_actions_in_period
             ,sequence_ending_with_action
-            # ,count_specific_actions
-            # ,get_numeric_column_stats
-            # ,find_most_common_actions
         ]
     
     return get_all_tools()            
-    # @tool
-    # def get_total_count(column_name: str = None) -> Dict:
-    #     """
-    #     Get the total count of rows, optionally filtered by a specific column.
-        
-    #     Args:
-    #         column_name: Optional column name to count non-null values for
-            
-    #     Returns:
-    #         Dictionary with total count and details
-            
-    #     Example Questions:
-    #         * How many total actions are there?
-    #         * What is the total number of rows?
-    #         * How many non-null values are in [column]?
-    #     """
-    #     if column_name:
-    #         count = df[column_name].count()
-    #         return {
-    #             'count': int(count),
-    #             'column': column_name,
-    #             'total_rows': len(df),
-    #             'percentage_filled': float((count/len(df) * 100))
-    #         }
-    #     return {
-    #         'count': len(df),
-    #         'details': 'Total number of rows in dataset'
-    #     }
-
-    # @tool
-    # def get_column_stats(column_name: str) -> Dict:
-    #     """
-    #     Get basic statistics for a numeric column.
-        
-    #     Args:
-    #         column_name: Name of the column to analyze
-            
-    #     Returns:
-    #         Dictionary with basic statistics
-            
-    #     Example Questions:
-    #         * What is the maximum value in [column]?
-    #         * What are the statistics for [column]?
-    #         * What's the average [column]?
-    #     """
-    #     if column_name not in df.columns:
-    #         return {'error': f'Column {column_name} not found'}
-        
-    #     try:
-    #         stats = df[column_name].describe()
-    #         return {
-    #             'column': column_name,
-    #             'min': float(stats['min']),
-    #             'max': float(stats['max']),
-    #             'mean': float(stats['mean']),
-    #             'median': float(stats['50%']),
-    #             'std': float(stats['std'])
-    #         }
-    #     except:
-    #         return {'error': f'Cannot compute statistics for {column_name}. Ensure it is numeric.'}
-
-    # @tool
-    # def get_value_frequencies(
-    #     column_name: str,
-    #     top_n: int = None,
-    #     normalize: bool = False
-    # ) -> Dict:
-    #     """
-    #     Get frequency distribution of values in a column.
-        
-    #     Args:
-    #         column_name: Column to analyze
-    #         top_n: Optional limit on number of values to return
-    #         normalize: Whether to return percentages instead of counts
-            
-    #     Returns:
-    #         Dictionary with value frequencies
-            
-    #     Example Questions:
-    #         * What is the most common value in [column]?
-    #         * How often does each value appear in [column]?
-    #         * What's the distribution of values in [column]?
-    #     """
-    #     if column_name not in df.columns:
-    #         return {'error': f'Column {column_name} not found'}
-        
-    #     value_counts = df[column_name].value_counts(normalize=normalize)
-    #     if top_n:
-    #         value_counts = value_counts.head(top_n)
-            
-    #     return {
-    #         'column': column_name,
-    #         'frequencies': dict(value_counts),
-    #         'total_unique_values': len(value_counts),
-    #         'most_common': value_counts.index[0],
-    #         'least_common': value_counts.index[-1],
-    #         'is_percentage': normalize
-    #     }
-    # def get_all_tools():
-    #     return  [
-    # most_common_event_sequences,
-    # consecutive_action_frequency,
-    # analyze_actions_after_distance,
-    # action_frequency_with_distance,
-    # multiple_actions_in_period,
-    # sequence_ending_with_action]
-    # return get_all_tools()
-    # def get_all_tools():
-    #     return [
-    #         most_common_event_sequences,
-    #         consecutive_action_frequency,
-    #         analyze_actions_after_distance,
-    #         action_frequency_with_distance,
-    #         multiple_actions_in_period,
-    #         sequence_ending_with_action,
-    #         get_total_count,
-    #         get_column_stats,
-    #         get_value_frequencies
-    #     ]
-    
-    # return get_all_tools()

@@ -120,3 +120,6 @@ def full_preprocess(df):
         df = df.rename(columns={'HIA Type': 'High Intensity Activity Type'})
     print(df)
     return df
+
+# df = pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\multi_session_hias\2025-01-12-16 Players-HIAs-Export.csv")
+# print(df)
