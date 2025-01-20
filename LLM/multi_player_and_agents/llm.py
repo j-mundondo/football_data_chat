@@ -9,10 +9,10 @@ def get_llm():
         # Create the Groq LLM instance using Streamlit secrets
         llm = ChatGroq(
             api_key=st.secrets["GROQ_API_KEY"],
-            model="llama3-8b-8192",
+            #model="llama3-8b-8192",
             #model="groq/llama3-70b-8192",#
-            #model="groq/llama-3.3-70b-versatile",#
-            #"groq/llama-3.1-8b-instant",
+            model="groq/llama-3.3-70b-versatile",
+            #model="groq/llama-3.1-8b-instant",
             temperature=0.0,
             max_tokens=None, 
             timeout=None,
