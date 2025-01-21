@@ -26,7 +26,9 @@ class DataFrameManager:
         return cls._instance
 
     def set_dataframe(self, df):
-        self._df = df
+        df['Player'] = df['Player'].str.strip().str.lower()
+        self._df = df[(df['Player'] == 'kolo') | (df['Player'] == 'lee') | (df['Player'] == 'mark')]
+
 
     def get_dataframe(self):
         return self._df
@@ -45,12 +47,14 @@ class ComparePlayersInput(BaseModel):
 
 # Initialize the DataFrame manager
 df_manager = DataFrameManager.get_instance()
-df_manager.set_dataframe(pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\multi_session_hias\2025-01-12-16 Players-HIAs-Export.csv"))
+#df_manager.set_dataframe(pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\multi_session_hias\2025-01-12-16 Players-HIAs-Export.csv"))
+df_manager.set_dataframe(pd.read_csv(r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsdoc\Projects\frequency_chat_PH\data\multi_session_hias\2025-01-15-17 Players-HIAs-Export_.csv"))
 
 @tool("Split dataframe by players")
 def split_dataframe(input_data: Union[str, dict, SplitDataframeInput]) -> Dict[str, pd.DataFrame]:
     """
-    Splits the main dataframe into separate dataframes for specified players.
+    Filters the main dataframe to only include the specified players.
+    Returns a dictionary with a single key containing the filtered dataframe.
     """
     try:
         df = df_manager.get_dataframe()
@@ -79,53 +83,46 @@ def split_dataframe(input_data: Union[str, dict, SplitDataframeInput]) -> Dict[s
         print("DataFrame columns:", df.columns.tolist())
 
         # Check for player column
-        player_column = None
-        potential_player_columns = ['Player', 'player', 'Name', 'name', 'PlayerName', 'Player Name']
-        for col in potential_player_columns:
-            if col in df.columns:
-                player_column = col
-                break
+        player_column = 'Player'
 
         if player_column is None:
             print("Could not find player column. Available columns are:", df.columns.tolist())
             return {}
 
-        # Filter dataframes
-        player_dfs = {}
-        for player in players:
-            if player in df[player_column].unique():
-                player_dfs[player] = df[df[player_column] == player].copy()
-                print(f"Found data for {player}: {len(player_dfs[player])} rows")
-            else:
-                print(f"No data found for player: {player}")
+        # Debug: Print unique players in DataFrame
+        available_players = df[player_column].unique()
+        print(f"Available players in DataFrame: {available_players}")
 
-        return player_dfs
+        # Filter dataframe for all specified players at once, with case-insensitive matching
+        mask = df[player_column].str.lower().isin([p.lower() for p in players])
+        filtered_df = df[mask].copy()
+        
+        # Print debug information
+        if len(filtered_df) == 0:
+            print("No data found for any specified players")
+            return {}
+            
+        print(f"Total rows in filtered DataFrame: {len(filtered_df)}")
+        # Group by player to show count per player
+        player_counts = filtered_df.groupby(player_column).size()
+        print("Rows per player:")
+        print(player_counts)
+
+        return {"filtered_data": filtered_df}
 
     except Exception as e:
         print(f"Error in split_dataframe: {str(e)}")
+        print(f"Error details: {str(e.__class__.__name__)}")
         return {}
 
 @tool("Compare players statistics")
 def compare_players(input_data: Union[str, dict, ComparePlayersInput]) -> Dict:
     """
-    Compares statistics between two players based on specified metrics.
+    Compares statistics between players based on metrics from a single filtered dataframe.
     
-    Args:
-        input_data: Can be:
-            - String (JSON formatted): {
-                "player_dfs": {
-                    "Mark": mark_dataframe,
-                    "Kolo": kolo_dataframe
-                },
-                "metrics": ["Distance"],
-                "action_type": "Sprint"
-            }
-            - Dictionary with player_dfs, metrics keys
-            - ComparePlayersInput instance
-        
     Example:
         input_data = {
-            "player_dfs": result_from_split_dataframe,
+            "filtered_data": dataframe_with_both_players,
             "metrics": ["Distance"],
             "action_type": "Sprint"
         }
@@ -137,42 +134,46 @@ def compare_players(input_data: Union[str, dict, ComparePlayersInput]) -> Dict:
                 input_data = json.loads(input_data)
             except json.JSONDecodeError:
                 return {"error": "Invalid JSON string provided"}
-                
-        if isinstance(input_data, dict):
-            # Handle metrics if it's a string representation of a list
-            if 'metrics' in input_data and isinstance(input_data['metrics'], str):
-                try:
-                    input_data['metrics'] = json.loads(input_data['metrics'])
-                except json.JSONDecodeError:
-                    if input_data['metrics'].strip('[]\'\"'):
-                        input_data['metrics'] = [input_data['metrics'].strip('[]\'\"')]
-                        
-            input_data = ComparePlayersInput(**input_data)
         
-        player_dfs = input_data.player_dfs
-        players = list(player_dfs.keys())
+        # Extract the filtered DataFrame
+        if not isinstance(input_data, dict) or 'filtered_data' not in input_data:
+            return {"error": "Missing filtered_data in input"}
+            
+        df = input_data['filtered_data']
         
+        # Convert to DataFrame if it's a dict
+        if isinstance(df, dict):
+            df = pd.DataFrame(df)
+        
+        # Get unique players from the filtered DataFrame
+        players = df['Player'].lower().unique()
         if len(players) != 2:
-            return {"error": "Exactly two players are required for comparison"}
-
+            return {"error": f"Expected 2 players, found {len(players)}"}
+            
         player_one, player_two = players
             
+        # Create separate views for each player
+        player_dfs = {
+            player_one: df[df['Player'] == player_one],
+            player_two: df[df['Player'] == player_two]
+        }
+            
         # Apply action type filter if specified
-        if input_data.action_type and input_data.action_type.lower() != "none":
+        if 'action_type' in input_data and input_data['action_type'] and input_data['action_type'].lower() != "none":
             for player in players:
                 player_dfs[player] = player_dfs[player][
-                    player_dfs[player]['High Intensity Activity Type'] == input_data.action_type
+                    player_dfs[player]['High Intensity Activity Type'] == input_data['action_type']
                 ]
         
-        # Default metrics if none specified
-        metrics = input_data.metrics if input_data.metrics else [
+        # Get metrics (either from input or default)
+        metrics = input_data.get('metrics', [
             'Distance', 'Magnitude', 'Avg Metabolic Power', 'Dynamic Stress Load'
-        ]
+        ])
         
         # Calculate comparisons
         comparisons = {}
         for metric in metrics:
-            if metric not in player_dfs[player_one].columns:
+            if metric not in df.columns:
                 print(f"Metric {metric} not found in data")
                 continue
                 
@@ -203,9 +204,9 @@ def compare_players(input_data: Union[str, dict, ComparePlayersInput]) -> Dict:
         
         return {
             "comparison_details": {
-                "players": players,
+                "players": list(players),
                 "metrics_compared": metrics,
-                "action_type": input_data.action_type if input_data.action_type else "all actions"
+                "action_type": input_data.get('action_type', "all actions")
             },
             "comparisons": comparisons
         }
@@ -224,7 +225,8 @@ dataframe_splitter = Agent(
     code_execution_mode="unsafe",
     verbose=True,
     use_system_prompt=False
-    ,max_iter=2
+    ,max_retry_limit=1
+    , 
 )
 
 # Define the comparison agent
@@ -240,6 +242,7 @@ player_comparison_agent = Agent(
     verbose=True,
     allow_delegation=False
     ,max_iter=2
+    ,max_retry_limit=1
 )
 
 # Add this function to parse player names from the prompt
@@ -267,6 +270,7 @@ identify_players = Task(
     expected_output="A dictionary containing the filtered dataframes for the specified players",
     max_retries=2,
     agent=dataframe_splitter#,
+    ,output_pydantic=SplitDataframeInput
   #  ,context={"data_available": True}  # Add any context needed
 )
 
@@ -285,6 +289,8 @@ compare_the_players = Task(
     agent=player_comparison_agent,
     dependencies=[identify_players],
     context=[identify_players]
+    ,output_pydantic=ComparePlayersInput
+    ,max_retries=2
 )
 
 # Setup and execute the crew
@@ -294,13 +300,17 @@ crew = Crew(
     process=Process.sequential,
     max_retries=2,
     verbose=True
-)
-
-# Execute with proper inputs
-try:
-    user_prompt = 'Filter the dataframe to Mark and Lee. This is the relevant dataframe'
-    players = extract_players_from_prompt(user_prompt)
     
+)
+#print(df_manager.get_dataframe()['Player'].value_counts())
+#Execute with proper inputs
+try:
+    # user_prompt = 'Filter the dataframe to Colly and Lee. This is the relevant dataframe'
+    # players = extract_players_from_prompt(user_prompt)
+    
+    players = ['kolo', 'lee']
+    user_prompt = f'Filter the dataframe to {players[0]} and {players[1]} and then subsequently compare their statistics.'
+
     result = crew.kickoff(
         inputs={
             "players": players,
@@ -315,6 +325,6 @@ except Exception as e:
     print(f"Error details: {str(e)}")
 
 
-# if result:
-#     for i in result:
-#         print(f"--------- \n {type(i)} \n -----------------")
+# # if result:
+# #     for i in result:
+# #         print(f"--------- \n {type(i)} \n -----------------")
