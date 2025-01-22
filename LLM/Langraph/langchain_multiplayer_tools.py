@@ -480,3 +480,64 @@ class ComparePlayerSessions(BaseTool):
     async def _arun(self, player_name: str) -> str:
         """Async implementation of the tool."""
         return self._run(player_name)
+    
+class ComparePlayerSessionsDictionary(BaseTool):
+    """Tool for comparing a player's performance across multiple sessions, returning data as a dictionary."""
+    name: str = Field("compare_player_sessions_dict", 
+                     description="Name of the tool")
+    description: str = Field(
+        """Compare a player's performance metrics across multiple training sessions, returning results as a dictionary.
+        Returns the most recent session's data in a structured format including:
+        - Activity type distribution
+        - Duration metrics
+        - Distance metrics
+        - Magnitude metrics
+        - Metabolic power metrics
+        - Dynamic stress load metrics
+        Input should be the name of the player to analyse.
+        """,
+        description="Description of what the tool does"
+    )
+    args_schema: Type[BaseModel] = Field(PlayerSessionComparisonInput, 
+                                       description="Schema for tool arguments")
+    return_direct: bool = True
+    session_data: Dict[str, pd.DataFrame] = Field(default_factory=dict, exclude=True)
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    
+    def _run(self, player_name: str) -> dict:
+        """Execute the comparison and return dictionary format."""
+        try:
+            if not self.session_data:
+                return {}
+            
+            comparison_results = compare_player_sessions(
+                self.session_data, 
+                player_name
+            )
+            
+            # Get the most recent session's data
+            latest_session = list(comparison_results['session_comparisons'].items())[-1][1]
+            
+            if not latest_session['data_found']:
+                return {}
+            
+            # Format into the structure expected by our RAG system
+            metrics = {
+                "player_metrics": latest_session['numeric_metrics'],
+                "Activity_Distribution": {
+                    activity: details['percentage'] 
+                    for activity, details in latest_session['activity_distribution'].items()
+                },
+                "Time_Metrics": latest_session['time_metrics']
+            }
+            
+            return metrics
+            
+        except Exception as e:
+            print(f"Error comparing player sessions: {str(e)}")
+            return {}
+
+    async def _arun(self, player_name: str) -> dict:
+        """Async implementation of the tool."""
+        return self._run(player_name)

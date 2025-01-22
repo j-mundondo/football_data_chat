@@ -1,7 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
-from llm import get_llama_3dot3_70b_versatile
+from llm import get_llama_3dot3_70b_versatile,get_llama3_8b_8192,get_70b_8192
 from preprocess_df import full_preprocess
-from langchain_multiplayer_tools import ComparePlayerMetrics, ComparePlayerSessions
+from langchain_multiplayer_tools import ComparePlayerMetrics, ComparePlayerSessions,ComparePlayerSessionsDictionary
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 import pandas as pd
 
@@ -90,7 +90,7 @@ import pandas as pd
 # # j carnegie
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
-from llm import get_llama_3dot3_70b_versatile
+from llm import get_llama_3dot3_70b_versatile, get_llama_3dot1_8b_instant
 import pandas as pd
 from pathlib import Path
 from typing import List, Dict, Optional, Type, Any
@@ -127,10 +127,10 @@ data_directory = r"C:\Users\j.mundondo\OneDrive - Statsports\Desktop\statsportsd
 session_data = load_session_data(data_directory)
 
 # Initialize the tool with your session data
-compare_player_sessions = ComparePlayerSessions(session_data=session_data)
-
+#compare_player_sessions = ComparePlayerSessions(session_data=session_data)
+compare_player_sessions_=ComparePlayerSessionsDictionary(session_data=session_data)
 # Initialize the LLM
-llm = get_llama_3dot3_70b_versatile()
+llm = get_llama_3dot1_8b_instant()#get_llama_3dot1_8b_instant()#get_llama3_8b_8192()#get_llama_3dot3_70b_versatile()
 
 # Create the prompt template
 prompt = ChatPromptTemplate.from_messages([
@@ -153,10 +153,12 @@ prompt = ChatPromptTemplate.from_messages([
         - Time-based pattern changes
         - Overall performance trajectory
         
-        Present the insights in a clear, chronological format that helps understand
-        the player's performance evolution across sessions using prose.
+        Present the insights in a python dictionary.
+        
+        Your only output will be a python dictionary with the player metrics.
 
-        Susequesnt to that present the data in a dataframe with columns being dates and rows being the different metrics.
+        CRITICAL : aside from the python dictionary, no additional words should be given
+
         """
     ),
     ("placeholder", "{chat_history}"),
@@ -167,20 +169,18 @@ prompt = ChatPromptTemplate.from_messages([
 # Create the agent
 agent = create_tool_calling_agent(
     llm=llm,
-    tools=[compare_player_sessions],
+    tools=[compare_player_sessions_],
     prompt=prompt
 )
 
 # Create the agent executor
 agent_executor = AgentExecutor(
     agent=agent,
-    tools=[compare_player_sessions],
-    verbose=True
+    tools=[compare_player_sessions_],
+   # verbose=True
 )
-
-if __name__ == "__main__":
-    # Example usage
-    result = agent_executor.invoke({
-        "input": "analyse Lee's performance across all available sessions and tell me duriung which session lee sprinted the most"
-    })
-    print(result["output"])
+# print("---")
+# x= agent_executor.invoke({
+#         "input": "analyse Lee's performance across all available sessions and provide his metrics as a dictionary"
+#     })#["output"]
+# print("***")
