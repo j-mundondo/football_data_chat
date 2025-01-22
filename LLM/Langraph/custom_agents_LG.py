@@ -181,6 +181,6 @@ agent_executor = AgentExecutor(
 if __name__ == "__main__":
     # Example usage
     result = agent_executor.invoke({
-        "input": "analyse Lee's performance across all available sessions"
+        "input": "analyse Lee's performance across all available sessions and tell me duriung which session lee sprinted the most"
     })
     print(result["output"])
