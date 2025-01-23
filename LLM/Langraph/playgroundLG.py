@@ -1,7 +1,7 @@
 import pandas as pd
 from custom_agents_LG import agent_executor
 from llm import get_llama_3dot3_70b_versatile,get_llama_3dot1_8b_instant,get_70b_8192
-llm = get_70b_8192()
+llm = get_llama_3dot3_70b_versatile()
 
 
 # Import necessary libraries
