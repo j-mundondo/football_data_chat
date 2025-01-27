@@ -1,7 +1,7 @@
 from langchain_core.prompts import ChatPromptTemplate
 from llm import get_llama_3dot3_70b_versatile,get_llama3_8b_8192,get_70b_8192
 from preprocess_df import full_preprocess
-from langchain_multiplayer_tools import ComparePlayerMetrics, ComparePlayerSessions,ComparePlayerSessionsDictionary
+#from langchain_multiplayer_tools import ComparePlayerMetrics, ComparePlayerSessions,ComparePlayerSessionsDictionary
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 import pandas as pd
 # # ruairi
@@ -106,13 +106,3 @@ agent_executor = AgentExecutor(
     tools=[compare_player_sessions_],
    #verbose=True
 )
-print("---")
-x= agent_executor.invoke({
-        "input": "analyse Lee's performance across all available sessions and provide his metrics as a dictionary"
-    })#["output"]
-print("***")
-print("New session_data structure:")
-for key, df in session_data.items():
-    print(f"Key: {key}")
-    print(f"Players in session: {df['Player'].unique()}")
-    
