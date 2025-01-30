@@ -660,6 +660,7 @@ class CompareMultiplePlayersLatestSession(BaseTool):
                                 "player": max_player[0],
                                 "value": max_player[1]
                             },
+                            
                             "lowest": {
                                 "player": min_player[0],
                                 "value": min_player[1]
