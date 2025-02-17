@@ -3,7 +3,7 @@
 
 # # Library Imports
 
-# In[1]:
+# In[30]:
 
 
 # Import necessary libraries
@@ -23,7 +23,7 @@ from langchain_core.documents import Document
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages 
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_community.document_loaders import (
     PyPDFLoader,
     Docx2txtLoader, 
@@ -40,8 +40,14 @@ from langchain.agents import AgentExecutor, create_tool_calling_agent
 from pathlib import Path
 from typing import List, Dict, Optional, Type, Any
 from llm import get_llama_3dot3_70b_versatile,get_llama_3dot1_8b_instant,get_70b_8192, get_llama3_8b_8192,DeepSeek
-llm = get_llama_3dot3_70b_versatile()
-#llm = DeepSeek()
+#llm = get_llama_3dot3_70b_versatile()
+llm = get_llama_3dot1_8b_instant()
+non_tool_llm=get_llama3_8b_8192()
+player_metrics_llm = get_llama_3dot1_8b_instant()
+pandasllm = get_llama_3dot1_8b_instant()
+deepseek_llm = DeepSeek()
+deepseek_llm = get_llama_3dot3_70b_versatile()
+extraction_llm = get_llama_3dot1_8b_instant()
 
 
 # # Set-Up And Test Vector Store
@@ -182,8 +188,6 @@ list(session_data.values())[0]
 # In[5]:
 
 
-non_tool_llm=get_llama3_8b_8192()
-
 vector_database_information_analysis_prompt = """
 You have been given the most similar documents based on a vector database search.
 
@@ -266,7 +270,7 @@ P.P.S Focus on comparing the player's metrics against the research metrics rathe
 # })'''
 
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate, MessagesPlaceholder
-player_metrics_llm = get_llama_3dot1_8b_instant()
+
 metrics_comparison_tool = ComparePlayerSessionsDictionary(session_data=session_data)
 # Create the system and human message templates
 system_message = SystemMessagePromptTemplate.from_template(
@@ -463,7 +467,7 @@ result
 from langchain_experimental.agents import create_pandas_dataframe_agent
 import pandas as pd
 df_merged = pd.concat([list(session_data.values())[0],list(session_data.values())[2],list(session_data.values())[1]], ignore_index=True)
-pandasllm = get_llama_3dot1_8b_instant()
+
 df_merged
 
 
@@ -578,31 +582,11 @@ for question in test_questions:
 # In[13]:
 
 
-# def extract_player_name(context: str) -> str:
-#     """Extract player name from the question using the LLM."""
-#     name_extraction_prompt = """
-#     Extract the player name(s) from the following question. 
-#     If no specific player is mentioned, return None.
-#     Only return the name(s) without any additional text.
-    
-#     Question: {context}
-#     """
-    
-#     prompt = PromptTemplate.from_template(name_extraction_prompt)
-#     messages = prompt.invoke({"context": context})
-#     response = llm.invoke(messages).content.strip()
-    
-#     return response if response.lower() != "none" else None
-
-
-# In[14]:
-
-
-def extract_player_names(context: str) -> List[str]:
-    """Extract one or multiple player names from the question."""
+def extract_player_name(context: str) -> str:
+    """Extract player name from the question with improved possessive handling."""
     name_extraction_prompt = """
     Extract the player name(s) from the following question.
-    Return the names as a comma-separated list.
+    Handle possessive forms (e.g., "Lee's" should return "Lee").
     If no specific player is mentioned, return None.
     Only return the name(s) without any additional text.
     
@@ -611,14 +595,16 @@ def extract_player_names(context: str) -> List[str]:
     
     prompt = PromptTemplate.from_template(name_extraction_prompt)
     messages = prompt.invoke({"context": context})
-    response = llm.invoke(messages).content.strip()
+    response = extraction_llm.invoke(messages).content.strip()
     
-    if response.lower() == "none":
-        return []
-    return [name.strip() for name in response.split(",")]
+    # Clean up possessive forms
+    if response.lower() != "none":
+        response = response.replace("'s", "").replace("s'", "s").strip()
+    
+    return response if response.lower() != "none" else None
 
 
-# In[15]:
+# In[14]:
 
 
 def extract_date(context: str) -> Optional[str]:
@@ -640,36 +626,11 @@ def extract_date(context: str) -> Optional[str]:
     return None if response.lower() == "none" else response
 
 
-# In[16]:
+# In[15]:
 
 
 from typing import TypedDict, List, Union
 State = Dict[str, Union[str, list, dict]]
-# def setup_initial_state(context: str) -> State:
-#     """Setup base state that includes only universally needed fields."""
-#     state = {
-#         "context": context,
-#         "answer": "",
-#         "route_type": None
-#     }
-    
-#     # Let the router enrich the state based on path
-#     route_result = question_router.invoke({"question": context})
-#     state["route_type"] = route_result.datasource
-    
-#     # Add path-specific fields
-#     if route_result.datasource == "vectorstore":
-#         state["vector_results"] = []
-#     elif route_result.datasource in ["single_session", "multi_session_comparison", "multi_player_comparison"]:
-#         state.update({
-#             "player_metrics": {},
-#             "player_name": None,
-#             "date_info": None
-#         })
-#     elif route_result.datasource == "pandas_dataframe":
-#         state["analysis_results"] = {}
-        
-#     return state
 
 def setup_initial_state(context: str) -> State:
     """Setup base state that includes only universally needed fields."""
@@ -701,7 +662,7 @@ def setup_initial_state(context: str) -> State:
 
 # # Nodes Code
 
-# In[17]:
+# In[16]:
 
 
 from langgraph.graph import StateGraph, START, END
@@ -710,6 +671,9 @@ from typing import TypedDict, List, Union
 # Define State as a class instead of a type alias
 class State(TypedDict):
     context: str
+    datasource: str
+    player_name: Optional[str]
+    date_info: Optional[str]
     player_metrics: dict
     analysis_results: dict
     vector_results: list
@@ -718,70 +682,100 @@ class State(TypedDict):
 
 # ### Generate Nodes
 
-# In[18]:
+# In[17]:
 
 
 def metrics_generate_node(state: State):
-    """Generate analysis for metrics-based queries (single session, multi-session, multi-player)."""
-    
-    analysis_type = state["analysis_results"].get("analysis_type")
-    
-    # Select appropriate prompt based on analysis type
-    if analysis_type == "single_session":
-        prompt_template = """
-        Analyze the following single session metrics for {player}:
+    """Generate analysis for any metrics-based query with both single and multi-player support."""
+    try:
+        # Handle skipped analysis
+        if state["analysis_results"].get("status") == "skipped":
+            state["answer"] = f"Could not analyze metrics: {state['analysis_results'].get('reason')}"
+            return state
+            
+        # Single session analysis
+        if state["analysis_results"].get("analysis_type") == "single_session":
+            player_name = state["analysis_results"].get("player")
+            session_data = state["analysis_results"].get("session_data", {})
+            
+            analysis_text = f"""
+            Training Metrics for {player_name}:
+            
+            Activity Distribution:
+            """
+            
+            # Add activity distribution
+            if "activity_distribution" in session_data:
+                for activity, percentage in session_data["activity_distribution"].items():
+                    analysis_text += f"- {activity}: {percentage:.1f}%\n"
+            
+            analysis_text += "\nPerformance Metrics:\n"
+            
+            # Add numeric metrics
+            if "numeric_metrics" in session_data:
+                for metric, data in session_data["numeric_metrics"].items():
+                    analysis_text += f"\n{metric}:\n"
+                    analysis_text += f"- Average: {data.get('mean', 0):.2f}\n"
+                    analysis_text += f"- Range: {data.get('min', 0):.2f} to {data.get('max', 0):.2f}\n"
+                    
+            # Add time metrics if available
+            if "time_metrics" in session_data:
+                analysis_text += "\nTiming Metrics:\n"
+                time_data = session_data["time_metrics"]
+                analysis_text += f"- Average time between actions: {time_data.get('avg_time_between_actions', 'N/A')}\n"
+                analysis_text += f"- Min time between actions: {time_data.get('min_time_between_actions', 'N/A')}\n"
+                analysis_text += f"- Max time between actions: {time_data.get('max_time_between_actions', 'N/A')}\n"
+            
+            state["answer"] = analysis_text
+            return state
+            
+        # Multi-player comparison analysis
+        metrics = state.get("player_metrics", {})
+        comparative_metrics = metrics.get("comparative_analysis", {})
+        player_data = metrics.get("player_comparisons", {})
         
-        SESSION METRICS:
-        {metrics}
+        if comparative_metrics:
+            analysis_text = """
+            Comparing Performance Metrics:
+            
+            Key Differences:
+            """
+            
+            # Add comparative analysis
+            for metric, data in comparative_metrics.items():
+                diff = data.get('difference_percentage', 0)
+                higher = data.get('highest', {})
+                lower = data.get('lowest', {})
+                
+                analysis_text += f"\n{metric}:\n"
+                analysis_text += f"- {higher.get('player', 'Unknown')} leads with {higher.get('value', 0):.2f}\n"
+                analysis_text += f"- {lower.get('player', 'Unknown')} follows with {lower.get('value', 0):.2f}\n"
+                analysis_text += f"- Difference: {diff:.1f}%\n"
+            
+            # Add activity distribution comparison
+            analysis_text += "\nActivity Distribution by Player:\n"
+            for player, data in player_data.items():
+                dist = data.get('activity_distribution', {})
+                analysis_text += f"\n{player}:\n"
+                for activity, percentage in dist.items():
+                    analysis_text += f"- {activity}: {percentage:.1f}%\n"
+                
+                # Add time metrics for each player
+                if "time_metrics" in data:
+                    analysis_text += f"\nTiming Metrics for {player}:\n"
+                    time_data = data["time_metrics"]
+                    analysis_text += f"- Average time between actions: {time_data.get('avg_time_between_actions', 'N/A')}\n"
+            
+            state["answer"] = analysis_text
+            return state
+            
+        state["answer"] = "No metrics data available for analysis"
+        return state
         
-        Focus on:
-        1. Key performance indicators
-        2. Notable metrics that stand out
-        3. Activity type distribution
-        4. Intensity metrics (Metabolic power, Dynamic stress load)
-        
-        Present the analysis in a clear, practitioner-friendly format.
-        """
-    
-    elif analysis_type == "multi_session":
-        prompt_template = """
-        Analyze the following trend data across multiple sessions for {player}:
-        
-        TREND DATA:
-        {metrics}
-        
-        Focus on:
-        1. Performance trends over time
-        2. Changes in key metrics
-        3. Workload progression
-        4. Consistency patterns
-        
-        Present the trends and insights in a clear, chronological format.
-        """
-    
-    elif analysis_type == "multi_player":
-        prompt_template = """
-        Compare the performance metrics between players:
-        
-        COMPARATIVE METRICS:
-        {metrics}
-        
-        Focus on:
-        1. Key differences between players
-        2. Relative performance levels
-        3. Individual strengths/areas for improvement
-        4. Notable patterns across the group
-        
-        Present the comparison in a clear, side-by-side format where relevant.
-        """
-    
-    messages = PromptTemplate.from_template(prompt_template).invoke({
-        "player": state["analysis_results"].get("player", "the player"),
-        "metrics": state["player_metrics"]
-    })
-    
-    response = llm.invoke(messages)
-    return {"answer": response.content}
+    except Exception as e:
+        print(f"Metrics generation error: {str(e)}")
+        state["answer"] = f"Error generating metrics analysis: {str(e)}"
+        return state
 
 def pandas_generate_node(state: State):
     """Generate analysis for pandas dataframe operations."""
@@ -814,110 +808,87 @@ def pandas_generate_node(state: State):
     return {"answer": response.content}
 
 
-# In[19]:
+# In[18]:
 
 
 def vector_generate_node(state: State):
-    """Generate structured analysis from vector store research documents."""
-    if not state["context"]:
-        return {"answer": "No research data available to analyze."}
-    
-    # Format research findings from context
-    research_findings = "\n\n".join([
-        f"RESEARCH FINDING {i+1}:\n{doc.page_content}"
-        for i, doc in enumerate(state["context"])
-    ])
-    
-    analysis_prompt = """
-    Review and summarize the following research findings in a clear, structured format.
-    Focus on organizing the information into a cohesive summary that highlights:
-    - Key research findings
-    - Important thresholds and metrics
-    - Risk factors and indicators
-    - Practical recommendations
-    
-    RESEARCH FINDINGS:
-    {research}
-    
-    Please present this information in a clear, organized format that would be helpful 
-    for sports science practitioners.
+    """Generate analysis from vector store documents while maintaining state."""
+    try:
+        # Check if we have vector results
+        if not state["vector_results"]:
+            state["answer"] = "No research data available to analyze."
+            return state
 
-    P.s. don't add any fluff. only include the elements that would directly answer the question the user provided.
-    """
-    
-    messages = PromptTemplate.from_template(analysis_prompt).invoke({
-        "research": research_findings
+        # Format research findings from documents
+        research_findings = "\n\n".join([
+            f"RESEARCH FINDING {i+1}:\n{doc.page_content}"
+            for i, doc in enumerate(state["vector_results"])
+        ])
         
-    })
-    
-    response = llm.invoke(messages)
-    return {"answer": response.content}
-
-# def retrieve_node(state: State):
-#     """Node for retrieving relevant documents."""
-#     documents = []
-    
-#     if state["player_metrics"] != "No specific player mentioned in query":
-#         metrics_doc = Document(
-#             page_content=f"Current Player Metrics for {state['player_name']}:\n{state['player_metrics']}",
-#             metadata={"source": "player_metrics"}
-#         )
-#         documents.append(metrics_doc)
-    
-#     # Get research documents with specific queries
-#     research_queries = [
-#         f"injury risk thresholds for {state['player_name']}'s activity pattern",
-#         "critical thresholds for Dynamic Stress Load DSL",
-#         "metabolic power thresholds for injury risk",
-#         "recovery indicators and patterns research",
-#         "acceleration deceleration ratio research findings"
-#     ]
-    
-#     for query in research_queries:
-#         retrieved_docs = vectorstore.similarity_search(
-#             query,
-#             k=2
-#         )
-#         documents.extend(retrieved_docs)
-    
-#     return {"context": documents}
+        analysis_prompt = """
+        Review and summarize the following research findings in a clear, structured format.
+        Focus on organizing the information into a cohesive summary that highlights:
+        - Key research findings
+        - Important thresholds and metrics
+        - Risk factors and indicators
+        - Practical recommendations
+        
+        RESEARCH FINDINGS:
+        {research}
+        
+        Please present this information in a clear, organized format that would be helpful 
+        for sports science practitioners.
+        """
+        
+        messages = PromptTemplate.from_template(analysis_prompt).invoke({
+            "research": research_findings
+        })
+        
+        response = deepseek_llm.invoke(messages)
+        state["answer"] = response.content
+        return state
+        
+    except Exception as e:
+        print(f"Vector generation error: {str(e)}")
+        state["answer"] = f"Error analyzing research data: {str(e)}"
+        return state
 
 def retrieve_node(state: State):
-    """Node for retrieving relevant documents."""
-    if state["datasource"] == "vectorstore":
-        # Pure research query - no player context needed
-        retrieved_docs = vectorstore.similarity_search(
-            state["context"],
-            k=4
-        )
-        return {"vector_results": retrieved_docs}
-    
-    # Player-specific document retrieval
-    documents = []
-    if state.get("player_metrics"):  # Only add if exists
-        metrics_doc = Document(
-            page_content=f"Current Player Metrics for {state['player_name']}:\n{state['player_metrics']}",
-            metadata={"source": "player_metrics"}
-        )
-        documents.append(metrics_doc)
-    
-    # Get research documents with specific queries
-    research_queries = [
-        f"injury risk thresholds for {state['player_name']}'s activity pattern",
-        "critical thresholds for Dynamic Stress Load DSL",
-        "metabolic power thresholds for injury risk",
-        "recovery indicators and patterns research",
-        "acceleration deceleration ratio research findings"
-    ]
-    
-    for query in research_queries:
-        retrieved_docs = vectorstore.similarity_search(
-            query,
-            k=2
-        )
-        documents.extend(retrieved_docs)
-    
-    return {"vector_results": documents}
+    """Enhanced retrieval node that handles all query types."""
+    try:
+        if state["datasource"] == "vectorstore":
+            # Pure research query
+            retrieved_docs = vectorstore.similarity_search(
+                state["context"],
+                k=4
+            )
+            return {"vector_results": retrieved_docs}
+        
+        # For player-specific queries that might need research context
+        documents = []
+        if state.get("player_metrics"):
+            metrics_doc = Document(
+                page_content=f"Current Player Metrics for {state.get('player_name')}:\n{state['player_metrics']}",
+                metadata={"source": "player_metrics"}
+            )
+            documents.append(metrics_doc)
+        
+        # Add research context if needed
+        if state.get("player_name"):
+            research_queries = [
+                f"injury risk thresholds for {state['player_name']}'s activity pattern",
+                "critical thresholds for Dynamic Stress Load DSL",
+                "metabolic power thresholds for injury risk"
+            ]
+            
+            for query in research_queries:
+                docs = vectorstore.similarity_search(query, k=2)
+                documents.extend(docs)
+        
+        return {"vector_results": documents}
+    except Exception as e:
+        print(f"Retrieval error: {str(e)}")
+        return {"vector_results": []}
 
 def give_pandas_df_executor(df):
     pandas_agent_executor = create_pandas_dataframe_agent(
@@ -930,14 +901,37 @@ def give_pandas_df_executor(df):
     )
     return pandas_agent_executor
 
-
 def pandas_agent_node(state: State):
-    '''Node to answer questions that can be answered by pandas dataframe analysis of the session'''
-    # Concatenate all DataFrames in session_data dynamically
-    df_merged = pd.concat(session_data.values(), ignore_index=True)
-    executor=give_pandas_df_executor(df_merged)
-    response = executor.invoke(state["context"])  #<-------------------- might need a better promtp here
-    return response
+    """Enhanced pandas analysis node with better error handling."""
+    try:
+        df_merged = pd.concat(session_data.values(), ignore_index=True)
+        executor = give_pandas_df_executor(df_merged)
+        
+        # Enhance the query with player context if available
+        enhanced_query = state["context"]
+        if state.get("player_name"):
+            enhanced_query += f" for player {state['player_name']}"
+        if state.get("date_info"):
+            enhanced_query += f" on {state['date_info']}"
+            
+        response = executor.invoke(enhanced_query)
+        
+        return {
+            "analysis_results": {
+                "pandas_output": response,
+                "analysis_type": "pandas",
+                "status": "completed"
+            }
+        }
+    except Exception as e:
+        print(f"Pandas analysis error: {str(e)}")
+        return {
+            "analysis_results": {
+                "error": str(e),
+                "analysis_type": "pandas",
+                "status": "failed"
+            }
+        }
 
 
 # Create a proper State dictionary
@@ -953,7 +947,7 @@ state = {
 pandas_agent_node(state)
 
 
-# In[20]:
+# In[19]:
 
 
 # Graph nodes
@@ -979,34 +973,35 @@ def extract_name_node(state: State):
     return {"player_name": player_name}
 
 
-# In[21]:
+# In[20]:
 
 
-def extract_date(context: str) -> Optional[str]:
-    """Extract date information from the question."""
-    date_extraction_prompt = """
-    Extract the date or time period mentioned in the following question.
-    If a specific date is mentioned, return it in YYYY-MM-DD format.
-    If a relative time period is mentioned (e.g., "last week", "past month"), return that phrase.
-    If no date/time is mentioned, return None.
-    Only return the date/time without any additional text.
-    
-    Question: {context}
-    """
-    
-    prompt = PromptTemplate.from_template(date_extraction_prompt)
-    messages = prompt.invoke({"context": context})
-    response = llm.invoke(messages).content.strip()
-    
-    return None if response.lower() == "none" else response
+def extract_name_node(state: State):
+    """Node for extracting player name - returns FULL state."""
+    try:
+        player_name = extract_player_name(state["context"])
+        # Create a new state dict with ALL fields
+        state["player_name"] = player_name
+        print(f"==========================================={player_name}==========================")
+        return state  # Return the complete state
+    except Exception as e:
+        print(f"Name extraction skipped: {str(e)}")
+        state["player_name"] = None
+        return state  # Return the complete state
 
 def extract_date_node(state: State):
-    """Node for extracting date information from the question."""
-    date_info = extract_date(state["context"])
-    return {"date_info": date_info}
+    """Node for extracting date info - returns FULL state."""
+    try:
+        date_info = extract_date(state["context"])
+        state["date_info"] = date_info
+        return state  # Return the complete state
+    except Exception as e:
+        print(f"Date extraction skipped: {str(e)}")
+        state["date_info"] = None
+        return state  # Return the complete state
 
 
-# In[22]:
+# In[21]:
 
 
 def single_player_multiple_sessions_node(state: State):
@@ -1044,22 +1039,33 @@ def single_player_multiple_sessions_node(state: State):
 
 # # Building Graph Viz
 
-# In[23]:
+# In[22]:
 
 
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, List, Union
 
-# Define State as a class instead of a type alias
-class State(TypedDict):
-    context: str
-    player_metrics: dict
-    analysis_results: dict
-    vector_results: list
-    answer: str
+def setup_initial_state(context: str) -> State:
+    """Setup unified state structure for all paths."""
+    # Get routing decision
+    route_result = question_router.invoke({"question": context})
+    
+    # Initialize comprehensive state
+    state = {
+        "context": context,
+        "datasource": route_result.datasource,
+        "player_name": None,
+        "date_info": None,
+        "player_metrics": {},
+        "analysis_results": {},
+        "vector_results": [],
+        "answer": ""
+    }
+    
+    return state
 
 
-# In[24]:
+# In[23]:
 
 
 def multi_player_comparison_node(state: State):
@@ -1091,259 +1097,140 @@ def multi_player_comparison_node(state: State):
         }
 
 
-# In[25]:
+# In[24]:
 
 
 def single_player_metrics_node(state: State):
-    """Node to analyze a single player's session metrics."""
+    """Node for single player analysis with improved player name handling."""
+    player_name = state.get("player_name")
+    if not player_name:
+        state.update({
+            "player_metrics": {},
+            "analysis_results": {
+                "analysis_type": "single_session",
+                "status": "skipped",
+                "reason": "No player specified"
+            }
+        })
+        return state
+    
     try:
-        # Get single session metrics from the executor
         response = single_session_executor.invoke({
-            "input": state["context"]
+            "input": f"Get {player_name}'s latest session metrics"
         })['output']
         
-        # Extract metadata
-        player_name = extract_player_name(state["context"])
-        date_info = extract_date(state["context"])
-        
-        # Update state with results
-        return {
+        state.update({
             "player_metrics": response,
             "analysis_results": {
                 "analysis_type": "single_session",
                 "player": player_name,
-                "date": date_info,
-                "session_data": response
+                "date": state.get("date_info"),
+                "session_data": response,
+                "status": "completed"
             }
-        }
+        })
+        return state
     except Exception as e:
-        print(f"Error in single_player_metrics_node: {str(e)}")
-        return {
+        print(f"Single player metrics error: {str(e)}")
+        state.update({
             "player_metrics": {},
             "analysis_results": {
                 "error": str(e),
                 "analysis_type": "single_session",
                 "status": "failed"
             }
-        }
+        })
+        return state
+
+
+# In[25]:
+
+
+def route_question(state: State) -> str:
+    """Route to appropriate path while maintaining state."""
+    print("---ROUTE QUESTION---")
+    route_result = question_router.invoke({"question": state["context"]})
+    state["datasource"] = route_result.datasource
+    print(f"---ROUTING TO: {route_result.datasource}---")
+    return route_result.datasource
 
 
 # In[26]:
 
 
-def route_question(state: State) -> str:
-    """Route question to appropriate tool or vectorstore based on advanced routing schema."""
-    print("---ROUTE QUESTION---")
-    question = state["context"]
-    
-    # Get routing decision
-    route_result = question_router.invoke({"question": question})
-    source = route_result.datasource
-    
-    # Log routing decision
-    routing_map = {
-        "vectorstore": "Vector DB (Research Data)",
-        "single_session": "Single Session Analysis",
-        "multi_session_comparison": "Multi-Session Trend Analysis",
-        "multi_player_comparison": "Multi-Player Comparison",
-        "pandas_dataframe" :"Pandas Analysis"
-        
-    }
-    print(f"---ROUTING TO: {routing_map.get(source, source)}---")
-    
-    # Return appropriate path
-    return source
-
-
-# In[27]:
-
-
-# from langgraph.graph import StateGraph, START, END
-
-# # Define basic workflow
-# workflow = StateGraph(State)
-
-# # Vector Database note and edges
-# workflow.add_node("retrieve_from_vectorDB", retrieve_node)
-# workflow.add_edge("vector_generate", END)
-# workflow.add_node("vector_generate", vector_generate_node)
-
-
-
-# #Single player metrics
-# workflow.add_node("single_player_metrics", single_player_metrics_node)
-# workflow.add_edge("single_player_metrics", "get_player_name_node")
-
-
-# # Compare players node
-# workflow.add_node("compare_players", multi_player_comparison_node)
-# workflow.add_edge("compare_players", "get_player_name_node")
-
-# # Self Comparison
-# workflow.add_node("player_trend_analysis", single_player_multiple_sessions_node)
-# workflow.add_edge("player_trend_analysis", "get_player_name_node")
-
-
-# workflow.add_node("pandas_analysis", pandas_agent_node)
-
-# #Extract name node
-# workflow.add_node("get_player_name_node", extract_name_node)
-
-
-# # #Get The Date Node
-# workflow.add_node("get_the_date", extract_date_node)
-# workflow.add_edge("get_player_name_node", "get_the_date")
-
-# # Actual comparison execution
-# workflow.add_node("multi_player_comparison", multi_player_comparison_node)
-# workflow.add_edge("get_the_date", "multi_player_comparison")
-
-# # Actual single player comparison node
-# workflow.add_node("single_session_comparison", single_player_metrics_node)
-# workflow.add_edge("get_the_date", "single_session_comparison")
-
-# # Single player, multiple sessions
-# workflow.add_node("single_player_many_sessions", single_player_multiple_sessions_node)
-# workflow.add_edge("get_the_date", "single_player_many_sessions")
-
-# # Add basic flow from START to END
-
-# workflow.add_conditional_edges(
-#         START,
-#         route_question,
-#         {
-#         "vectorstore": "retrieve_from_vectorDB",
-#         "single_session": "single_player_metrics",
-#         "multi_session_comparison": "player_trend_analysis",
-#         "multi_player_comparison": "compare_players",
-#         "pandas_dataframe": "pandas_analysis"
-#         }
-#     )
-
-# #workflow.add_edge(START, "retrieve_from_vectorDB")
-# workflow.add_edge("retrieve_from_vectorDB", "vector_generate")
-
-
-# # Add the generate nodes
-# workflow.add_node("metrics_generate", metrics_generate_node)
-# workflow.add_node("pandas_generate", pandas_generate_node)
-# #workflow.add_node("vector_generate", vector_generate_node)
-# #workflow.add_node("combined_generate", combined_generate_node)
-
-# # Add edges based on analysis type
-# workflow.add_edge("single_session_comparison", "metrics_generate")
-# workflow.add_edge("multi_player_comparison", "metrics_generate")
-# workflow.add_edge("single_player_many_sessions", "metrics_generate")
-# workflow.add_edge("pandas_analysis", "pandas_generate")
-# #workflow.add_edge("retrieve_from_vectorDB", "vector_generate")
-
-# # Add edges to END
-# workflow.add_edge("metrics_generate", END)
-# workflow.add_edge("pandas_generate", END)
-# workflow.add_edge("vector_generate", END)
-# #workflow.add_edge("combined_generate", END)
-
-# # Compile workflow
-# app = workflow.compile()
-# from IPython.display import Image, display
-
-# try:
-#     display(Image(app.get_graph().draw_mermaid_png()))
-# except Exception:
-#     # This requires some extra dependencies and is optional
-#     pass
-
-from langgraph.graph import StateGraph, START, END
-
-# Define basic workflow 
 workflow = StateGraph(State)
 
-# ===================
-# Vector Store Path
-# ===================
+# Add all nodes
 workflow.add_node("retrieve_from_vectorDB", retrieve_node)
 workflow.add_node("vector_generate", vector_generate_node)
-workflow.add_edge("retrieve_from_vectorDB", "vector_generate")
-workflow.add_edge("vector_generate", END)
-
-# ===================
-# Player Analysis Paths
-# ===================
-# Common player analysis nodes
 workflow.add_node("get_player_name_node", extract_name_node)
 workflow.add_node("get_the_date", extract_date_node)
 workflow.add_node("metrics_generate", metrics_generate_node)
-
-# Single player session path
 workflow.add_node("single_player_metrics", single_player_metrics_node)
-workflow.add_edge("single_player_metrics", "get_player_name_node")
-workflow.add_edge("get_player_name_node", "get_the_date")
-workflow.add_edge("get_the_date", "single_session_comparison")
 workflow.add_node("single_session_comparison", single_player_metrics_node)
-workflow.add_edge("single_session_comparison", "metrics_generate")
-
-# Multi session comparison path
 workflow.add_node("player_trend_analysis", single_player_multiple_sessions_node)
-workflow.add_edge("player_trend_analysis", "get_player_name_node")
-workflow.add_edge("get_the_date", "single_player_many_sessions")
 workflow.add_node("single_player_many_sessions", single_player_multiple_sessions_node)
-workflow.add_edge("single_player_many_sessions", "metrics_generate")
-
-# Multi player comparison path
 workflow.add_node("compare_players", multi_player_comparison_node)
-workflow.add_edge("compare_players", "get_player_name_node")
-workflow.add_edge("get_the_date", "multi_player_comparison")
 workflow.add_node("multi_player_comparison", multi_player_comparison_node)
-workflow.add_edge("multi_player_comparison", "metrics_generate")
-
-# ===================
-# Pandas Analysis Path
-# ===================
 workflow.add_node("pandas_analysis", pandas_agent_node)
 workflow.add_node("pandas_generate", pandas_generate_node)
-workflow.add_edge("pandas_analysis", "pandas_generate")
-workflow.add_edge("pandas_generate", END)
 
-# ===================
-# Add edges to END for all generate nodes
-# ===================
-workflow.add_edge("metrics_generate", END)
+# Universal flow through name and date extraction
+workflow.add_edge(START, "get_player_name_node")
+workflow.add_edge("get_player_name_node", "get_the_date")
 
-# ===================
-# Route from START based on path type
-# ===================
+# Route from date extraction based on datasource
 workflow.add_conditional_edges(
-    START,
-    route_question,
+    "get_the_date",
+    lambda x: x["datasource"],
     {
         "vectorstore": "retrieve_from_vectorDB",
-        "single_session": "single_player_metrics",
-        "multi_session_comparison": "player_trend_analysis",
-        "multi_player_comparison": "compare_players",
+        "single_session": "single_session_comparison",
+        "multi_session_comparison": "single_player_many_sessions",
+        "multi_player_comparison": "multi_player_comparison",
         "pandas_dataframe": "pandas_analysis"
     }
 )
 
-# Compile workflow
+# Generate nodes connections
+workflow.add_edge("retrieve_from_vectorDB", "vector_generate")
+workflow.add_edge("vector_generate", END)
+
+workflow.add_edge("single_session_comparison", "metrics_generate")
+workflow.add_edge("multi_player_comparison", "metrics_generate")
+workflow.add_edge("single_player_many_sessions", "metrics_generate")
+workflow.add_edge("metrics_generate", END)
+
+workflow.add_edge("pandas_analysis", "pandas_generate")
+workflow.add_edge("pandas_generate", END)
+
+# Compile the workflow
 app = workflow.compile()
+from IPython.display import Image, display
+
+try:
+    display(Image(app.get_graph().draw_mermaid_png()))
+except Exception:
+    # This requires some extra dependencies and is optional
+    pass
 
 
-# In[28]:
+# In[27]:
 
 
 from pprint import pprint
 # Test questions for different paths 
 test_questions = [
     # Vectorstore path
-    "What does research say about safe training load thresholds players?",
-    # Single session path 
-    "How did Lee perform in his latest training session?",
-    # Multi-session comparison path
-    "Has Lee's workload increased over the past month?",
-    # Multi-player comparison path  
-    "Compare the performance metrics between Lee and Fionn",
+    "What is the one biggest factor contributing to injury according to the research?",
+    # # Single session path 
+    #"Tell me about Lee?",
+    # # Multi-session comparison path
+    # "Has Lee's workload increased over the past month?",
+    # # Multi-player comparison path  
+    # "Compare the performance metrics between Lee and Fionn",
     # Pandas dataframe path
-    "What's the average training duration across all players?"
+    #"What's the average training duration across all players?"
 ]
 
 # Run tests
@@ -1352,6 +1239,7 @@ for question in test_questions:
     
     # Use proper state initialization
     inputs = setup_initial_state(question)
+    print(inputs)
     
     print("--- EXECUTION FLOW ---")
     try:
@@ -1369,4 +1257,16 @@ for question in test_questions:
     if 'value' in locals():
         pprint(value)
     print("\n" + "="*50 + "\n")
+
+
+# In[28]:
+
+
+print(value['answer'])
+
+
+# In[29]:
+
+
+####################### I dont think having just one generate metrics node is best #################################
 
